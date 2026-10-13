@@ -153,8 +153,9 @@ def _fail(exc: ReelferryError, as_json: bool) -> None:
 
 
 def _wait_for(app: Any, job_id: str, as_json: bool) -> dict[str, Any]:
-    from reelferry.jobs import Worker
+    from reelferry.jobs import Worker, ensure_worker
 
+    ensure_worker(app)
     worker = None
     if app.jobs.live_workers() == 0:
         worker = Worker(app, concurrency=1, only_job_id=job_id)
@@ -172,7 +173,13 @@ def _wait_for(app: Any, job_id: str, as_json: bool) -> dict[str, Any]:
                 break
     except KeyboardInterrupt:
         click.echo("", err=True)
-        click.echo(f"stopped waiting; job {job_id} keeps running in the background", err=True)
+        if worker is None:
+            click.echo(f"stopped waiting; job {job_id} keeps running in the background", err=True)
+        else:
+            click.echo(
+                f"stopped job {job_id}; it resumes when a worker runs (`reelferry worker`)",
+                err=True,
+            )
         sys.exit(130)
     finally:
         if worker is not None:
@@ -350,7 +357,8 @@ def serve(host: str, port: int, no_worker: bool) -> None:
 
 @main.command()
 @click.option("--exit-when-idle", is_flag=True, help="Stop once no jobs are left.")
-def worker(exit_when_idle: bool) -> None:
+@click.option("--id", "worker_id", hidden=True, help="Worker id reserved by the starter.")
+def worker(exit_when_idle: bool, worker_id: str | None) -> None:
     """Run background jobs (started automatically when needed)."""
     import logging
 
@@ -358,7 +366,7 @@ def worker(exit_when_idle: bool) -> None:
     from reelferry.jobs import Worker
 
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
-    Worker(App(), exit_when_idle=exit_when_idle).run_until_idle()
+    Worker(App(), worker_id=worker_id, exit_when_idle=exit_when_idle).run_until_idle()
 
 
 @main.command()

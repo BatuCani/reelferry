@@ -157,7 +157,7 @@ class JobStore:
         now = time.time()
         with self.db.tx() as conn:
             sql = (
-                "SELECT id, status, attempts FROM jobs WHERE"
+                "SELECT id FROM jobs WHERE"
                 " (status = 'queued' OR (status = 'running' AND lease_expires_at < ?))"
             )
             params: list[Any] = [now]
@@ -169,23 +169,6 @@ class JobStore:
                 return None
             job_id: str = row["id"]
             ts = now_iso()
-            if row["attempts"] >= MAX_ATTEMPTS:
-                conn.execute(
-                    "UPDATE jobs SET status = 'failed', error = ?, finished_at = ?, updated_at = ?,"
-                    " lease_owner = NULL WHERE id = ?",
-                    (
-                        dumps(
-                            {
-                                "code": ErrorCode.JOB_FAILED.value,
-                                "message": f"gave up after {MAX_ATTEMPTS} interrupted attempts",
-                            }
-                        ),
-                        ts,
-                        ts,
-                        job_id,
-                    ),
-                )
-                return None
             conn.execute(
                 "UPDATE jobs SET status = 'running', lease_owner = ?, lease_expires_at = ?,"
                 " attempts = attempts + 1, started_at = COALESCE(started_at, ?), updated_at = ?"
@@ -198,6 +181,14 @@ class JobStore:
         self.db.execute(
             "UPDATE jobs SET lease_expires_at = ? WHERE lease_owner = ? AND status = 'running'",
             (time.time() + LEASE_SECONDS, owner),
+        )
+
+    def release(self, owner: str) -> None:
+        """Hand the running jobs of a stopping worker back so any worker resumes them now."""
+        self.db.execute(
+            "UPDATE jobs SET lease_owner = NULL, lease_expires_at = 0"
+            " WHERE lease_owner = ? AND status = 'running'",
+            (owner,),
         )
 
     def set_progress(self, job_id: str, progress: float, message: str | None) -> None:
@@ -233,9 +224,10 @@ class JobStore:
         result: dict[str, Any] | None = None,
         error: dict[str, Any] | None = None,
         message: str | None = None,
-    ) -> None:
+    ) -> bool:
+        """Record the final state. False if ``owner`` no longer holds the job's lease."""
         ts = now_iso()
-        self.db.execute(
+        updated = self.db.execute(
             "UPDATE jobs SET status = ?, result = ?, error = ?, message = COALESCE(?, message),"
             " progress = CASE WHEN ? = 'succeeded' THEN 1 ELSE progress END,"
             " finished_at = ?, updated_at = ?, lease_owner = NULL, lease_expires_at = NULL"
@@ -252,6 +244,7 @@ class JobStore:
                 owner,
             ),
         )
+        return updated == 1
 
     def wait(self, job_id: str, timeout: float, *, poll: float = 0.5) -> Job:
         deadline = time.monotonic() + timeout
@@ -285,10 +278,13 @@ class JobStore:
         return int(row[0]) if row else 0
 
     def pending_count(self) -> int:
+        """Jobs that need a worker: queued, or running for a worker that is gone."""
+        now = time.time()
         row = self.db.one(
-            "SELECT COUNT(*) FROM jobs WHERE status = 'queued'"
-            " OR (status = 'running' AND lease_expires_at < ?)",
-            (time.time(),),
+            "SELECT COUNT(*) FROM jobs WHERE status = 'queued' OR (status = 'running' AND"
+            " (lease_expires_at < ? OR lease_owner NOT IN"
+            " (SELECT id FROM workers WHERE heartbeat_at >= ?)))",
+            (now, now - WORKER_ALIVE_SECONDS),
         )
         return int(row[0]) if row else 0
 
@@ -303,6 +299,7 @@ class JobContext:
         row = app.db.one("SELECT * FROM jobs WHERE id = ?", (job_id,))
         assert row is not None
         self.kind = JobKind(row["kind"])
+        self.attempts: int = row["attempts"]
         self.input: dict[str, Any] = json.loads(row["input"])
         self.source_id: str | None = row["source_id"]
         self.clip_id: str | None = row["clip_id"]
@@ -415,13 +412,14 @@ class Worker:
         self,
         app: App,
         *,
+        worker_id: str | None = None,
         concurrency: int | None = None,
         only_job_id: str | None = None,
         exit_when_idle: bool = False,
         idle_grace: float = 5.0,
     ) -> None:
         self.app = app
-        self.id = new_id("wrk")
+        self.id = worker_id or new_id("wrk")
         self.concurrency = concurrency or app.settings.max_parallel_jobs
         self.only_job_id = only_job_id
         self.exit_when_idle = exit_when_idle
@@ -449,6 +447,7 @@ class Worker:
         for thread in self._threads:
             thread.join(timeout=timeout)
         try:
+            self.app.jobs.release(self.id)
             self.app.jobs.unregister_worker(self.id)
         finally:
             self.app.db.close()
@@ -506,22 +505,31 @@ def run_job(app: App, job_id: str, owner: str) -> None:
     ctx = JobContext(app, job_id, owner)
     handler = HANDLERS.get(ctx.kind)
     try:
+        if ctx.attempts > MAX_ATTEMPTS:
+            raise ReelferryError(
+                ErrorCode.JOB_FAILED, f"gave up after {MAX_ATTEMPTS} interrupted attempts"
+            )
         if handler is None:
             raise ReelferryError(ErrorCode.INTERNAL, f"no handler for job kind {ctx.kind.value}")
         result = handler(app, ctx)
     except JobCanceled:
-        app.jobs.finish(job_id, JobStatus.CANCELED, owner=owner, message="canceled")
+        ended = app.jobs.finish(job_id, JobStatus.CANCELED, owner=owner, message="canceled")
     except ReelferryError as exc:
-        app.jobs.finish(
+        ended = app.jobs.finish(
             job_id, JobStatus.FAILED, owner=owner, error=exc.to_dict(), message=exc.message
         )
     except Exception as exc:
         log.exception("job %s crashed", job_id)
         error = {"code": ErrorCode.INTERNAL.value, "message": f"{type(exc).__name__}: {exc}"}
-        app.jobs.finish(job_id, JobStatus.FAILED, owner=owner, error=error, message=str(exc))
+        ended = app.jobs.finish(
+            job_id, JobStatus.FAILED, owner=owner, error=error, message=str(exc)
+        )
     else:
-        app.jobs.finish(job_id, JobStatus.SUCCEEDED, owner=owner, result=result, message="done")
-    notify_job_end(app, app.jobs.get(job_id))
+        ended = app.jobs.finish(
+            job_id, JobStatus.SUCCEEDED, owner=owner, result=result, message="done"
+        )
+    if ended:
+        notify_job_end(app, app.jobs.get(job_id))
 
 
 def cancel(app: App, job_id: str) -> Job:
@@ -557,9 +565,13 @@ def notify_job_end(app: App, job: Job) -> None:
 
 
 def ensure_worker(app: App) -> None:
-    """Make sure some process will pick up queued jobs; start a detached worker if needed."""
+    """Make sure some process will pick up queued jobs; start a detached worker if needed.
+
+    The new worker is registered before it starts, so callers right after this see it."""
     if os.environ.get("REELFERRY_NO_AUTOWORKER") or app.jobs.live_workers() > 0:
         return
+    worker_id = new_id("wrk")
+    app.jobs.register_worker(worker_id)
     app.paths.logs_dir.mkdir(parents=True, exist_ok=True)
     log_path = app.paths.logs_dir / "worker.log"
     with log_path.open("ab") as log_file:
@@ -578,6 +590,19 @@ def ensure_worker(app: App) -> None:
             kwargs["creationflags"] = subprocess.CREATE_NEW_PROCESS_GROUP | 0x00000008
         else:
             kwargs["start_new_session"] = True
-        subprocess.Popen(
-            [sys.executable, "-m", "reelferry", "worker", "--exit-when-idle"], **kwargs
-        )
+        try:
+            subprocess.Popen(
+                [
+                    sys.executable,
+                    "-m",
+                    "reelferry",
+                    "worker",
+                    "--exit-when-idle",
+                    "--id",
+                    worker_id,
+                ],
+                **kwargs,
+            )
+        except BaseException:
+            app.jobs.unregister_worker(worker_id)
+            raise

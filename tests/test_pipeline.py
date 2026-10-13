@@ -203,6 +203,29 @@ def test_soft_subtitles_without_burn_in(app: App, ready: dict[str, Any]) -> None
     assert "subtitle" in streams
 
 
+def test_unrendered_preview_is_framed_like_the_render(app: App, ready: dict[str, Any]) -> None:
+    ff = detect_ffmpeg()
+    clip = call(
+        app,
+        "create_clip",
+        source_id=ready["source"].id,
+        start=1.0,
+        end=5.0,
+        format="9:16",
+        framing="crop",
+        crop_x=0.1,
+        captions_enabled=False,
+    ).clip
+    left = call(app, "preview_clip", clip_id=clip.id, frames=1, columns=1)
+    assert not left.from_render
+    info = probe(ff, Path(left.sheet_path))
+    assert info["height"] > info["width"]
+
+    call(app, "update_clip", clip_id=clip.id, crop_x=0.9)
+    right = call(app, "preview_clip", clip_id=clip.id, frames=1, columns=1)
+    assert Path(right.sheet_path).read_bytes() != Path(left.sheet_path).read_bytes()
+
+
 def test_burn_in_without_libass_is_a_clear_error(
     app: App, ready: dict[str, Any], monkeypatch: pytest.MonkeyPatch
 ) -> None:

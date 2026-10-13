@@ -111,6 +111,7 @@ def transcribe(app: App, inp: TranscribeInput) -> JobOutput:
         raise ReelferryError(ErrorCode.MEDIA_ERROR, f"source {source.id!r} has no audio track")
     running = app.jobs.active_for(JobKind.TRANSCRIBE, source_id=source.id, clip_id=None)
     if running:
+        ensure_worker(app)
         return JobOutput(job=running)
     job = app.jobs.enqueue(
         JobKind.TRANSCRIBE,

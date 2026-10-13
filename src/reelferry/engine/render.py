@@ -37,24 +37,28 @@ def _escape_filter_value(value: str) -> str:
     return value.replace("\\", "/").replace(":", "\\:").replace("'", "\\'").replace(",", "\\,")
 
 
-def video_filter(plan: RenderPlan) -> str:
-    width, height = plan.size
-    cx = min(1.0, max(0.0, plan.crop_x))
-    if plan.framing == "crop":
-        chain = (
-            f"[0:v]scale={width}:{height}:force_original_aspect_ratio=increase,"
+def framing_filter(fmt: str, framing: str, crop_x: float, *, source: str = "[0:v]") -> str:
+    """Frame ``source`` at the output size of ``fmt``; the chain ends in ``[base]``."""
+    width, height = OUTPUT_SIZES[fmt]
+    cx = min(1.0, max(0.0, crop_x))
+    if framing == "crop":
+        return (
+            f"{source}scale={width}:{height}:force_original_aspect_ratio=increase,"
             f"crop={width}:{height}:(iw-{width})*{cx:.4f}:(ih-{height})/2,setsar=1[base]"
         )
-    else:
-        small_w, small_h = width // 4, height // 4
-        chain = (
-            "[0:v]split=2[bgsrc][fgsrc];"
-            f"[bgsrc]scale={small_w}:{small_h}:force_original_aspect_ratio=increase,"
-            f"crop={small_w}:{small_h},gblur=sigma=12,eq=brightness=-0.08,"
-            f"scale={width}:{height}[bg];"
-            f"[fgsrc]scale={width}:{height}:force_original_aspect_ratio=decrease[fg];"
-            "[bg][fg]overlay=(W-w)/2:(H-h)/2,setsar=1[base]"
-        )
+    small_w, small_h = width // 4, height // 4
+    return (
+        f"{source}split=2[bgsrc][fgsrc];"
+        f"[bgsrc]scale={small_w}:{small_h}:force_original_aspect_ratio=increase,"
+        f"crop={small_w}:{small_h},gblur=sigma=12,eq=brightness=-0.08,"
+        f"scale={width}:{height}[bg];"
+        f"[fgsrc]scale={width}:{height}:force_original_aspect_ratio=decrease[fg];"
+        "[bg][fg]overlay=(W-w)/2:(H-h)/2,setsar=1[base]"
+    )
+
+
+def video_filter(plan: RenderPlan) -> str:
+    chain = framing_filter(plan.format, plan.framing, plan.crop_x)
     tail = "[base]"
     if plan.ass_file:
         ass = f"ass=filename={_escape_filter_value(plan.ass_file)}"
@@ -119,13 +123,23 @@ def contact_sheet_cmd(
     media: Path,
     start: float,
     duration: float,
+    fmt: str,
+    framing: str,
+    crop_x: float,
     frames: int,
     columns: int,
-    tile_width: int,
     output: Path,
 ) -> list[str]:
+    """A grid of frames from ``media`` framed exactly like a render of the clip."""
     rows = -(-frames // columns)
     rate = frames / max(duration, 0.1)
+    width, height = OUTPUT_SIZES[fmt]
+    tile_width = 240 if height > width else 426
+    graph = (
+        f"[0:v]fps={rate:.6f}[sampled];"
+        + framing_filter(fmt, framing, crop_x, source="[sampled]")
+        + f";[base]scale={tile_width}:-2,tile={columns}x{rows}:padding=6:margin=6[sheet]"
+    )
     return [
         ff.ffmpeg,
         "-hide_banner",
@@ -139,8 +153,10 @@ def contact_sheet_cmd(
         f"{duration:.3f}",
         "-i",
         str(media),
-        "-vf",
-        f"fps={rate:.6f},scale={tile_width}:-2,tile={columns}x{rows}:padding=6:margin=6",
+        "-filter_complex",
+        graph,
+        "-map",
+        "[sheet]",
         "-frames:v",
         "1",
         "-q:v",

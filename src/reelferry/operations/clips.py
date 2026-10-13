@@ -376,6 +376,7 @@ def render_clip(app: App, inp: RenderClipInput) -> RenderOutput:
     if clip.status is ClipStatus.RENDERING:
         running = app.jobs.active_for(JobKind.RENDER_CLIP, source_id=None, clip_id=clip.id)
         if running:
+            ensure_worker(app)
             return RenderOutput(clip=clip, job=running)
     changes = inp.model_dump(exclude={"clip_id"}, exclude_none=True)
     changes = {k: v for k, v in changes.items() if getattr(clip, k) != v}
@@ -495,8 +496,9 @@ def _render_ended(app: App, job: Job) -> None:
     image_field="sheet_path",
 )
 def preview_clip(app: App, inp: PreviewClipInput) -> PreviewOutput:
-    """A JPEG grid of evenly spaced frames. Uses the latest render when it matches the
-    clip's current revision (so burned captions are visible), else the source range."""
+    """A JPEG grid of evenly spaced frames, framed like the render (format, framing,
+    crop_x). Uses the latest render when it matches the clip's current revision (so burned
+    captions are visible), else the source range."""
     import subprocess
 
     clip = get_clip(app.db, inp.clip_id)
@@ -507,11 +509,9 @@ def preview_clip(app: App, inp: PreviewClipInput) -> PreviewOutput:
     )
     if from_render and render is not None:
         media, start, duration = Path(render.video_path), 0.0, render.duration
-        tile_width = 240 if render.height > render.width else 426
     else:
         media = Path(str(ready_source(app.db, clip.source_id).path))
         start, duration = clip.start, clip.end - clip.start
-        tile_width = 426
     out_dir = app.paths.clips_dir / clip.id
     out_dir.mkdir(parents=True, exist_ok=True)
     sheet = out_dir / f"preview-r{clip.revision}{'-render' if from_render else ''}.jpg"
@@ -520,9 +520,11 @@ def preview_clip(app: App, inp: PreviewClipInput) -> PreviewOutput:
         media=media,
         start=start,
         duration=duration,
+        fmt=clip.format,
+        framing=clip.framing,
+        crop_x=clip.crop_x,
         frames=inp.frames,
         columns=min(inp.columns, inp.frames),
-        tile_width=tile_width,
         output=sheet,
     )
     proc = subprocess.run(cmd, capture_output=True, text=True, check=False)

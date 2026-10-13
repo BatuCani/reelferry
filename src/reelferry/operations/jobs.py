@@ -6,7 +6,7 @@ from pydantic import Field
 
 from reelferry.app import App
 from reelferry.errors import ErrorCode
-from reelferry.jobs import cancel
+from reelferry.jobs import cancel, ensure_worker
 from reelferry.models import Job, JobStatus, Model
 from reelferry.operations.transcripts import JobOutput
 from reelferry.registry import operation
@@ -71,6 +71,8 @@ def get_job(app: App, inp: JobIdInput) -> JobOutput:
 def wait_job(app: App, inp: WaitJobInput) -> WaitJobOutput:
     """Block until the job succeeds, fails or is canceled, or until `timeout` seconds pass.
     Call again if done is false."""
+    if not app.jobs.get(inp.job_id).status.terminal:
+        ensure_worker(app)
     job = app.jobs.wait(inp.job_id, inp.timeout)
     return WaitJobOutput(job=job, done=job.status.terminal)
 
