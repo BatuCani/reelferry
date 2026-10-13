@@ -73,7 +73,11 @@ def _which(name: str, explicit: str | None, near: str | None = None) -> str | No
 
 def _list_names(binary: str, flag: str) -> frozenset[str]:
     out = subprocess.run(
-        [binary, "-hide_banner", flag], capture_output=True, text=True, check=False
+        [binary, "-hide_banner", flag],
+        capture_output=True,
+        text=True,
+        check=False,
+        **own_process_group(),
     ).stdout
     names: set[str] = set()
     for line in out.splitlines():
@@ -100,7 +104,11 @@ def _detect(ffmpeg_path: str | None, ffprobe_path: str | None) -> FFmpeg:
             hint="ffprobe ships with ffmpeg; set ffprobe_path if it lives elsewhere.",
         )
     head = subprocess.run(
-        [ffmpeg, "-hide_banner", "-version"], capture_output=True, text=True, check=False
+        [ffmpeg, "-hide_banner", "-version"],
+        capture_output=True,
+        text=True,
+        check=False,
+        **own_process_group(),
     ).stdout
     version = head.splitlines()[0].removeprefix("ffmpeg version ").split(" ")[0] if head else "?"
     return FFmpeg(
@@ -141,6 +149,7 @@ def probe(ff: FFmpeg, path: Path) -> dict[str, Any]:
         capture_output=True,
         text=True,
         check=False,
+        **own_process_group(),
     )
     if proc.returncode != 0:
         raise ReelferryError(

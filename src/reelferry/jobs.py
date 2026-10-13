@@ -14,6 +14,7 @@ from __future__ import annotations
 import json
 import logging
 import os
+import signal
 import subprocess
 import sys
 import threading
@@ -186,10 +187,11 @@ class JobStore:
         )
 
     def release(self, owner: str) -> None:
-        """Hand the running jobs of a stopping worker back so any worker resumes them now."""
+        """Hand the running jobs of a stopping worker back so any worker resumes them now.
+        A clean hand-back does not count toward the attempts that end in giving up."""
         self.db.execute(
-            "UPDATE jobs SET lease_owner = NULL, lease_expires_at = 0"
-            " WHERE lease_owner = ? AND status = 'running'",
+            "UPDATE jobs SET lease_owner = NULL, lease_expires_at = 0,"
+            " attempts = MAX(attempts - 1, 0) WHERE lease_owner = ? AND status = 'running'",
             (owner,),
         )
 
@@ -431,8 +433,6 @@ class JobContext:
                         on_line(line.rstrip("\n"))
                     self.check_cancel()
                 proc.wait()
-            if self.stopping.is_set():
-                raise JobInterrupted
         except BaseException:
             proc.kill()
             proc.wait()
@@ -475,6 +475,7 @@ class Worker:
         self._idle_since: float | None = None
 
     def start(self) -> None:
+        _HOSTED.add(self)
         self.app.jobs.register_worker(self.id)
         heart = threading.Thread(target=self._heartbeat, name="reelferry-heartbeat", daemon=True)
         heart.start()
@@ -486,8 +487,13 @@ class Worker:
             thread.start()
             self._threads.append(thread)
 
+    def interrupt(self) -> None:
+        """Start stopping at once: kill job children and stop claiming new jobs."""
+        self._stop.set()
+
     def stop(self, timeout: float = 5.0) -> None:
         self._stop.set()
+        _HOSTED.discard(self)
         for thread in self._threads:
             thread.join(timeout=timeout)
         try:
@@ -556,27 +562,52 @@ def run_job(app: App, job_id: str, owner: str, stopping: StopSignal | None = Non
         if handler is None:
             raise ReelferryError(ErrorCode.INTERNAL, f"no handler for job kind {ctx.kind.value}")
         result = handler(app, ctx)
-    except JobInterrupted:
-        log.info("job %s interrupted by worker stop; it resumes later", job_id)
-        return
     except JobCanceled:
         ended = app.jobs.finish(job_id, JobStatus.CANCELED, owner=owner, message="canceled")
-    except ReelferryError as exc:
-        ended = app.jobs.finish(
-            job_id, JobStatus.FAILED, owner=owner, error=exc.to_dict(), message=exc.message
-        )
     except Exception as exc:
-        log.exception("job %s crashed", job_id)
-        error = {"code": ErrorCode.INTERNAL.value, "message": f"{type(exc).__name__}: {exc}"}
-        ended = app.jobs.finish(
-            job_id, JobStatus.FAILED, owner=owner, error=error, message=str(exc)
-        )
+        if isinstance(exc, JobInterrupted) or ctx.stopping.is_set():
+            log.info("job %s interrupted by worker stop; it resumes later", job_id)
+            return
+        if isinstance(exc, ReelferryError):
+            error, message = exc.to_dict(), exc.message
+        else:
+            log.exception("job %s crashed", job_id)
+            error = {"code": ErrorCode.INTERNAL.value, "message": f"{type(exc).__name__}: {exc}"}
+            message = str(exc)
+        ended = app.jobs.finish(job_id, JobStatus.FAILED, owner=owner, error=error, message=message)
     else:
         ended = app.jobs.finish(
             job_id, JobStatus.SUCCEEDED, owner=owner, result=result, message="done"
         )
     if ended:
         notify_job_end(app, app.jobs.get(job_id))
+
+
+_HOSTED: set[Worker] = set()
+
+
+@contextmanager
+def stop_on_signals() -> Iterator[None]:
+    """For a process that hosts workers: Ctrl-C, SIGTERM and SIGHUP (terminal closed)
+    interrupt the workers at once, killing their job children, and then raise
+    KeyboardInterrupt so the host runs its normal ``Worker.stop`` path."""
+
+    def handle(signum: int, _frame: Any) -> None:
+        for worker in list(_HOSTED):
+            worker.interrupt()
+        if signum == getattr(signal, "SIGHUP", None):
+            signal.raise_signal(signal.SIGTERM)
+            return
+        raise KeyboardInterrupt
+
+    names = ("SIGINT", "SIGTERM", "SIGHUP")
+    signums = [getattr(signal, name) for name in names if hasattr(signal, name)]
+    previous = {signum: signal.signal(signum, handle) for signum in signums}
+    try:
+        yield
+    finally:
+        for signum, handler in previous.items():
+            signal.signal(signum, handler)
 
 
 def cancel(app: App, job_id: str) -> Job:

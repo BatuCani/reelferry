@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import contextlib
 import json
 import sys
 import types as pytypes
@@ -167,34 +168,39 @@ def _keep_worker(app: Any, job_id: str, worker: Any) -> Any:
 
 
 def _wait_for(app: Any, job_id: str, as_json: bool) -> dict[str, Any]:
+    from reelferry.jobs import stop_on_signals
+
     worker = None
     last = ""
-    try:
-        while True:
-            worker = _keep_worker(app, job_id, worker)
-            job = app.jobs.wait(job_id, 1.0)
-            if not as_json:
-                line = f"{job.status.value} {job.progress * 100:5.1f}%  {job.message or ''}"
-                if line != last and sys.stderr.isatty():
-                    click.echo("\r\033[2K" + line, nl=False, err=True)
-                last = line
-            if job.status.terminal:
-                break
-    except KeyboardInterrupt:
-        click.echo("", err=True)
-        if worker is None:
-            click.echo(f"stopped waiting; job {job_id} keeps running in the background", err=True)
-        else:
-            click.echo(
-                f"stopped job {job_id}; it resumes when a worker runs (`reelferry worker`)",
-                err=True,
-            )
-        sys.exit(130)
-    finally:
-        if worker is not None:
-            worker.stop()
-        if not as_json and sys.stderr.isatty():
+    with stop_on_signals():
+        try:
+            while True:
+                worker = _keep_worker(app, job_id, worker)
+                job = app.jobs.wait(job_id, 1.0)
+                if not as_json:
+                    line = f"{job.status.value} {job.progress * 100:5.1f}%  {job.message or ''}"
+                    if line != last and sys.stderr.isatty():
+                        click.echo("\r\033[2K" + line, nl=False, err=True)
+                    last = line
+                if job.status.terminal:
+                    break
+        except KeyboardInterrupt:
             click.echo("", err=True)
+            if worker is None:
+                click.echo(
+                    f"stopped waiting; job {job_id} keeps running in the background", err=True
+                )
+            else:
+                click.echo(
+                    f"stopped job {job_id}; it resumes when a worker runs (`reelferry worker`)",
+                    err=True,
+                )
+            sys.exit(130)
+        finally:
+            if worker is not None:
+                worker.stop()
+            if not as_json and sys.stderr.isatty():
+                click.echo("", err=True)
     return dict(job.model_dump(mode="json"))
 
 
@@ -332,15 +338,18 @@ def mcp() -> None:
 
     from reelferry.app import App
     from reelferry.interfaces.mcp_server import run_stdio
-    from reelferry.jobs import Worker
+    from reelferry.jobs import Worker, stop_on_signals
 
     app = App()
     worker = Worker(app)
-    worker.start()
-    try:
-        anyio.run(run_stdio, app)
-    finally:
-        worker.stop()
+    with stop_on_signals():
+        worker.start()
+        try:
+            anyio.run(run_stdio, app)
+        except KeyboardInterrupt:
+            pass
+        finally:
+            worker.stop()
 
 
 @main.command()
@@ -354,6 +363,7 @@ def serve(host: str, port: int, no_worker: bool) -> None:
     from reelferry.app import App
     from reelferry.config import load_or_create_token
     from reelferry.interfaces.http_api import create_api
+    from reelferry.jobs import stop_on_signals
 
     app = App()
     token = load_or_create_token(app.paths)
@@ -361,7 +371,8 @@ def serve(host: str, port: int, no_worker: bool) -> None:
     click.echo(f"Reelferry {__version__} on http://{host}:{port}", err=True)
     click.echo(f"  API docs: http://{host}:{port}/docs   MCP: http://{host}:{port}/mcp", err=True)
     click.echo("  Token: `reelferry token`", err=True)
-    uvicorn.run(api, host=host, port=port, log_level="warning")
+    with stop_on_signals(), contextlib.suppress(KeyboardInterrupt):
+        uvicorn.run(api, host=host, port=port, log_level="warning")
 
 
 @main.command()
@@ -372,10 +383,11 @@ def worker(exit_when_idle: bool, worker_id: str | None) -> None:
     import logging
 
     from reelferry.app import App
-    from reelferry.jobs import Worker
+    from reelferry.jobs import Worker, stop_on_signals
 
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
-    Worker(App(), worker_id=worker_id, exit_when_idle=exit_when_idle).run_until_idle()
+    with stop_on_signals(), contextlib.suppress(KeyboardInterrupt):
+        Worker(App(), worker_id=worker_id, exit_when_idle=exit_when_idle).run_until_idle()
 
 
 @main.command()

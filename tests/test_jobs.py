@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import signal
 import sys
 import threading
 import time
@@ -10,6 +11,8 @@ import pytest
 
 from reelferry import jobs
 from reelferry.app import App
+from reelferry.engine.media import FFmpeg, probe
+from reelferry.errors import ErrorCode, ReelferryError
 from reelferry.jobs import JobContext, Worker, run_job
 from reelferry.models import JobKind, JobStatus, SourceStatus
 from reelferry.registry import load_operations
@@ -168,7 +171,7 @@ def test_stopped_worker_hands_its_job_to_the_next_worker(
     release.set()
     done = app.jobs.get(job.id)
     assert done.status is JobStatus.SUCCEEDED
-    assert done.result == {"attempt": 2}
+    assert done.result == {"attempt": 1}
 
 
 def test_idle_worker_waits_for_a_job_held_by_a_dead_worker(
@@ -257,3 +260,102 @@ def test_canceling_a_job_kills_its_child(app: App, monkeypatch: pytest.MonkeyPat
         assert _gone(pids[0])
     finally:
         worker.stop()
+
+
+def _wait_gone(pid: int) -> bool:
+    deadline = time.monotonic() + 5
+    while not _gone(pid) and time.monotonic() < deadline:
+        time.sleep(0.05)
+    return _gone(pid)
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="POSIX signals")
+@pytest.mark.parametrize("signame", ["SIGTERM", "SIGHUP"])
+def test_termination_signals_kill_job_children_before_the_host_exits(
+    app: App, monkeypatch: pytest.MonkeyPatch, signame: str
+) -> None:
+    pids, started = _child_job(monkeypatch, CHILD_SLEEPS)
+    job = app.jobs.enqueue(JobKind.SUGGEST_CLIPS, {})
+    worker = Worker(app, concurrency=1)
+    with pytest.raises(KeyboardInterrupt), jobs.stop_on_signals():
+        worker.start()
+        assert started.wait(10)
+        os.kill(os.getpid(), getattr(signal, signame))
+        time.sleep(10)
+    assert _wait_gone(pids[0])
+
+    worker.stop()
+    assert app.jobs.get(job.id).status is JobStatus.RUNNING
+    assert app.jobs.claim("wrk_next") == job.id
+    assert app.jobs.get(job.id).attempts == 1
+
+
+def test_a_step_failing_while_its_worker_stops_is_an_interruption(
+    app: App, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    started = threading.Event()
+
+    def handler(app: App, ctx: JobContext) -> dict[str, Any]:
+        started.set()
+        while not ctx.stopping.is_set():
+            time.sleep(0.01)
+        raise ReelferryError(ErrorCode.UPSTREAM_ERROR, "the merge child was killed")
+
+    monkeypatch.setitem(jobs.HANDLERS, JobKind.SUGGEST_CLIPS, handler)
+    job = app.jobs.enqueue(JobKind.SUGGEST_CLIPS, {})
+    worker = Worker(app, concurrency=1)
+    worker.start()
+    assert started.wait(10)
+    worker.stop()
+    stopped = app.jobs.get(job.id)
+    assert stopped.status is JobStatus.RUNNING
+    assert stopped.error is None
+    assert app.jobs.claim("wrk_next") == job.id
+
+
+def test_graceful_stops_never_use_up_the_attempts(
+    app: App, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    started = threading.Event()
+
+    def handler(app: App, ctx: JobContext) -> dict[str, Any]:
+        if ctx.input.get("finish"):
+            return {"attempt": ctx.attempts}
+        started.set()
+        while True:
+            ctx.check_cancel()
+            time.sleep(0.01)
+
+    monkeypatch.setitem(jobs.HANDLERS, JobKind.SUGGEST_CLIPS, handler)
+    job = app.jobs.enqueue(JobKind.SUGGEST_CLIPS, {})
+    for _ in range(jobs.MAX_ATTEMPTS + 1):
+        started.clear()
+        worker = Worker(app, concurrency=1)
+        worker.start()
+        assert started.wait(10)
+        worker.stop()
+    app.db.execute(
+        "UPDATE jobs SET input = json_set(input, '$.finish', json('true')) WHERE id = ?",
+        (job.id,),
+    )
+    run_jobs(app)
+    done = app.jobs.get(job.id)
+    assert done.status is JobStatus.SUCCEEDED
+    assert done.result == {"attempt": 1}
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="POSIX process groups")
+def test_probe_runs_outside_the_terminal_process_group(tmp_path: Any) -> None:
+    fake = tmp_path / "ffprobe"
+    fake.write_text(
+        f"#!{sys.executable}\n"
+        "import json, os, sys\n"
+        "open(sys.argv[-1] + '.pgid', 'w').write(str(os.getpgid(0)))\n"
+        "print(json.dumps({'streams': [{'codec_type': 'audio'}], 'format': {'duration': '1'}}))\n"
+    )
+    fake.chmod(0o755)
+    media = tmp_path / "talk.wav"
+    media.write_bytes(b"")
+    info = probe(FFmpeg("ffmpeg", str(fake), "test", frozenset(), frozenset()), media)
+    assert info["duration"] == 1
+    assert int((tmp_path / "talk.wav.pgid").read_text()) != os.getpgid(0)
