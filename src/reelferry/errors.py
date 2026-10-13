@@ -77,3 +77,7 @@ def not_found(kind: str, ident: str) -> ReelferryError:
 
 class JobCanceled(Exception):
     """Raised inside a running job when cancellation was requested."""
+
+
+class JobInterrupted(Exception):
+    """Raised inside a running job when its worker stops; another worker resumes it."""

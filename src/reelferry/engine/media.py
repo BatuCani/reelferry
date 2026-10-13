@@ -7,6 +7,7 @@ import json
 import re
 import shutil
 import subprocess
+import sys
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -21,6 +22,14 @@ LIBASS_HINT = (
     "Then point Reelferry at it: `reelferry settings update --ffmpeg-path /path/to/ffmpeg`. "
     "Without libass you can still render with burn_captions=false (soft subtitles + sidecars)."
 )
+
+
+def own_process_group() -> dict[str, Any]:
+    """Popen options that keep a child out of the terminal's process group, so Ctrl-C
+    reaches only the parent, which then stops its children itself."""
+    if sys.platform == "win32":
+        return {"creationflags": subprocess.CREATE_NEW_PROCESS_GROUP}
+    return {"start_new_session": True}
 
 
 @dataclass(frozen=True)

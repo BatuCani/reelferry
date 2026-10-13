@@ -17,10 +17,13 @@ import uvicorn
 from click.testing import CliRunner
 from fastapi.testclient import TestClient
 
+from reelferry import jobs
 from reelferry.app import App
 from reelferry.cli import main
 from reelferry.interfaces.http_api import create_api
 from reelferry.interfaces.mcp_server import build_server
+from reelferry.jobs import JobContext
+from reelferry.models import JobKind
 
 from .conftest import HAS_FFMPEG
 
@@ -184,6 +187,32 @@ def test_cli_json_output_and_errors(tmp_path: Path) -> None:
     via_input = runner.invoke(main, ["settings", "update", "--input", '{"max_parallel_jobs": 2}'])
     assert via_input.exit_code == 0, via_input.output
     assert "max_parallel_jobs: 2" in via_input.output
+
+
+@pytest.mark.timeout(60)
+def test_cli_wait_takes_over_when_the_worker_dies(
+    app: App, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    def handler(app: App, ctx: JobContext) -> dict[str, Any]:
+        return {"ok": True}
+
+    monkeypatch.setitem(jobs.HANDLERS, JobKind.SUGGEST_CLIPS, handler)
+    job = app.jobs.enqueue(JobKind.SUGGEST_CLIPS, {})
+    app.jobs.register_worker("wrk_doomed")
+    assert app.jobs.claim("wrk_doomed") == job.id
+
+    def worker_dies() -> None:
+        time.sleep(1.5)
+        app.db.execute("UPDATE workers SET heartbeat_at = 0 WHERE id = 'wrk_doomed'")
+        app.db.execute("UPDATE jobs SET lease_expires_at = 0 WHERE id = ?", (job.id,))
+        app.db.close()
+
+    killer = threading.Thread(target=worker_dies)
+    killer.start()
+    out = CliRunner().invoke(main, ["job", "get", job.id, "--wait", "--json"])
+    killer.join()
+    assert out.exit_code == 0, out.output
+    assert json.loads(out.output)["job"]["status"] == "succeeded"
 
 
 @pytest.mark.skipif(not HAS_FFMPEG, reason="ffmpeg not installed")

@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, Protocol
 
 from reelferry.engine.audio import SAMPLE_RATE, read_wav, require_free_disk
+from reelferry.engine.media import own_process_group
 from reelferry.errors import ErrorCode, ReelferryError
 from reelferry.models import Word
 
@@ -218,6 +219,7 @@ class OpenRouterTranscriber:
                     str(piece),
                 ],
                 check=True,
+                **own_process_group(),
             )
             try:
                 data, piece_cost = client.transcribe(

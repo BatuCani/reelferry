@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import os
+import sys
 import threading
 import time
 from typing import Any
@@ -185,3 +187,73 @@ def test_idle_worker_waits_for_a_job_held_by_a_dead_worker(
     runner.join(10)
     assert not runner.is_alive()
     assert app.jobs.get(job.id).status is JobStatus.SUCCEEDED
+
+
+CHILD_SLEEPS = "import os, time; print(os.getpid(), flush=True); time.sleep(60)"
+CHILD_TICKS = (
+    "import os, time\nprint(os.getpid(), flush=True)\n"
+    "while True:\n    print('tick', flush=True)\n    time.sleep(0.05)"
+)
+
+
+def _child_job(monkeypatch: pytest.MonkeyPatch, script: str) -> tuple[list[int], threading.Event]:
+    pids: list[int] = []
+    started = threading.Event()
+
+    def handler(app: App, ctx: JobContext) -> dict[str, Any]:
+        def on_line(line: str) -> None:
+            if not pids:
+                pids.append(int(line))
+                started.set()
+
+        ctx.run_process([sys.executable, "-c", script], on_line=on_line)
+        return {}
+
+    monkeypatch.setitem(jobs.HANDLERS, JobKind.SUGGEST_CLIPS, handler)
+    return pids, started
+
+
+def _gone(pid: int) -> bool:
+    try:
+        os.kill(pid, 0)
+    except ProcessLookupError:
+        return True
+    return False
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="POSIX process groups")
+def test_stopping_a_worker_kills_its_child_and_keeps_the_job_resumable(
+    app: App, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    pids, started = _child_job(monkeypatch, CHILD_SLEEPS)
+    job = app.jobs.enqueue(JobKind.SUGGEST_CLIPS, {})
+    worker = Worker(app, concurrency=1)
+    worker.start()
+    assert started.wait(10)
+    child = pids[0]
+    # A terminal Ctrl-C goes to the foreground process group; the child is not in it.
+    assert os.getpgid(child) != os.getpgid(0)
+
+    worker.stop(timeout=5)
+    assert _gone(child)
+    stopped = app.jobs.get(job.id)
+    assert stopped.status is JobStatus.RUNNING
+    assert stopped.error is None
+    assert app.jobs.claim("wrk_next") == job.id
+
+
+def test_canceling_a_job_kills_its_child(app: App, monkeypatch: pytest.MonkeyPatch) -> None:
+    pids, started = _child_job(monkeypatch, CHILD_TICKS)
+    job = app.jobs.enqueue(JobKind.SUGGEST_CLIPS, {})
+    worker = Worker(App(app.paths), concurrency=1)
+    worker.start()
+    try:
+        assert started.wait(10)
+        jobs.cancel(app, job.id)
+        assert app.jobs.wait(job.id, 10).status is JobStatus.CANCELED
+        deadline = time.monotonic() + 5
+        while not _gone(pids[0]) and time.monotonic() < deadline:
+            time.sleep(0.05)
+        assert _gone(pids[0])
+    finally:
+        worker.stop()

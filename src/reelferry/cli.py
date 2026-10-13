@@ -152,17 +152,26 @@ def _fail(exc: ReelferryError, as_json: bool) -> None:
     sys.exit(code)
 
 
-def _wait_for(app: Any, job_id: str, as_json: bool) -> dict[str, Any]:
+def _keep_worker(app: Any, job_id: str, worker: Any) -> Any:
+    """Make sure a worker serves the job: a detached one, else one in this process."""
     from reelferry.jobs import Worker, ensure_worker
 
+    if worker is not None:
+        return worker
     ensure_worker(app)
+    if app.jobs.live_workers() > 0:
+        return None
+    worker = Worker(app, concurrency=1, only_job_id=job_id)
+    worker.start()
+    return worker
+
+
+def _wait_for(app: Any, job_id: str, as_json: bool) -> dict[str, Any]:
     worker = None
-    if app.jobs.live_workers() == 0:
-        worker = Worker(app, concurrency=1, only_job_id=job_id)
-        worker.start()
     last = ""
     try:
         while True:
+            worker = _keep_worker(app, job_id, worker)
             job = app.jobs.wait(job_id, 1.0)
             if not as_json:
                 line = f"{job.status.value} {job.progress * 100:5.1f}%  {job.message or ''}"

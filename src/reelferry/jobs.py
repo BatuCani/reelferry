@@ -18,12 +18,14 @@ import subprocess
 import sys
 import threading
 import time
-from collections.abc import Callable, Sequence
+from collections.abc import Callable, Iterator, Sequence
+from contextlib import contextmanager
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, cast
 
 from reelferry.db import Database, dumps, new_id, now_iso
-from reelferry.errors import ErrorCode, JobCanceled, ReelferryError, not_found
+from reelferry.engine.media import own_process_group
+from reelferry.errors import ErrorCode, JobCanceled, JobInterrupted, ReelferryError, not_found
 from reelferry.models import Job, JobKind, JobStatus, JobStep
 
 if TYPE_CHECKING:
@@ -289,13 +291,49 @@ class JobStore:
         return int(row[0]) if row else 0
 
 
+class StopSignal:
+    """A worker's stop flag. Setting it also kills the job subprocesses tracked under it."""
+
+    def __init__(self) -> None:
+        self._event = threading.Event()
+        self._lock = threading.Lock()
+        self._procs: set[subprocess.Popen[str]] = set()
+
+    def is_set(self) -> bool:
+        return self._event.is_set()
+
+    def wait(self, timeout: float) -> bool:
+        return self._event.wait(timeout)
+
+    def set(self) -> None:
+        with self._lock:
+            self._event.set()
+            for proc in self._procs:
+                proc.kill()
+
+    @contextmanager
+    def track(self, proc: subprocess.Popen[str]) -> Iterator[None]:
+        with self._lock:
+            if self._event.is_set():
+                proc.kill()
+            self._procs.add(proc)
+        try:
+            yield
+        finally:
+            with self._lock:
+                self._procs.discard(proc)
+
+
 class JobContext:
     """What a job handler sees: its input, step memory, progress, cancellation."""
 
-    def __init__(self, app: App, job_id: str, owner: str) -> None:
+    def __init__(
+        self, app: App, job_id: str, owner: str, stopping: StopSignal | None = None
+    ) -> None:
         self.app = app
         self.job_id = job_id
         self.owner = owner
+        self.stopping = stopping or StopSignal()
         row = app.db.one("SELECT * FROM jobs WHERE id = ?", (job_id,))
         assert row is not None
         self.kind = JobKind(row["kind"])
@@ -343,6 +381,8 @@ class JobContext:
         self.check_cancel()
 
     def check_cancel(self) -> None:
+        if self.stopping.is_set():
+            raise JobInterrupted
         now = time.monotonic()
         if now - self._last_cancel_check < 0.25:
             return
@@ -366,13 +406,14 @@ class JobContext:
         on_line: Callable[[str], None] | None = None,
         cwd: Path | None = None,
     ) -> str:
-        """Run a subprocess, stream stdout lines to ``on_line``, kill it on cancel."""
+        """Run a subprocess, stream stdout lines to ``on_line``, kill it on cancel or stop."""
         proc = subprocess.Popen(
             list(cmd),
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True,
             cwd=cwd,
+            **own_process_group(),
         )
         stderr_chunks: list[str] = []
 
@@ -383,12 +424,15 @@ class JobContext:
         drainer = threading.Thread(target=drain_stderr, daemon=True)
         drainer.start()
         try:
-            assert proc.stdout is not None
-            for line in proc.stdout:
-                if on_line:
-                    on_line(line.rstrip("\n"))
-                self.check_cancel()
-            proc.wait()
+            with self.stopping.track(proc):
+                assert proc.stdout is not None
+                for line in proc.stdout:
+                    if on_line:
+                        on_line(line.rstrip("\n"))
+                    self.check_cancel()
+                proc.wait()
+            if self.stopping.is_set():
+                raise JobInterrupted
         except BaseException:
             proc.kill()
             proc.wait()
@@ -424,7 +468,7 @@ class Worker:
         self.only_job_id = only_job_id
         self.exit_when_idle = exit_when_idle
         self.idle_grace = idle_grace
-        self._stop = threading.Event()
+        self._stop = StopSignal()
         self._threads: list[threading.Thread] = []
         self._busy = 0
         self._busy_lock = threading.Lock()
@@ -494,15 +538,15 @@ class Worker:
             with self._busy_lock:
                 self._busy += 1
             try:
-                run_job(self.app, job_id, self.id)
+                run_job(self.app, job_id, self.id, self._stop)
             finally:
                 with self._busy_lock:
                     self._busy -= 1
         self.app.db.close()
 
 
-def run_job(app: App, job_id: str, owner: str) -> None:
-    ctx = JobContext(app, job_id, owner)
+def run_job(app: App, job_id: str, owner: str, stopping: StopSignal | None = None) -> None:
+    ctx = JobContext(app, job_id, owner, stopping)
     handler = HANDLERS.get(ctx.kind)
     try:
         if ctx.attempts > MAX_ATTEMPTS:
@@ -512,6 +556,9 @@ def run_job(app: App, job_id: str, owner: str) -> None:
         if handler is None:
             raise ReelferryError(ErrorCode.INTERNAL, f"no handler for job kind {ctx.kind.value}")
         result = handler(app, ctx)
+    except JobInterrupted:
+        log.info("job %s interrupted by worker stop; it resumes later", job_id)
+        return
     except JobCanceled:
         ended = app.jobs.finish(job_id, JobStatus.CANCELED, owner=owner, message="canceled")
     except ReelferryError as exc:
@@ -586,10 +633,9 @@ def ensure_worker(app: App) -> None:
                 "REELFERRY_MEDIA_DIR": str(app.paths.media_dir),
             },
         }
+        kwargs.update(own_process_group())
         if sys.platform == "win32":
-            kwargs["creationflags"] = subprocess.CREATE_NEW_PROCESS_GROUP | 0x00000008
-        else:
-            kwargs["start_new_session"] = True
+            kwargs["creationflags"] |= 0x00000008
         try:
             subprocess.Popen(
                 [
