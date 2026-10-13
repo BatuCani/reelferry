@@ -1,0 +1,123 @@
+[project]
+name = "reelferry"
+version = "0.1.0"
+description = "Agent-first, local clip studio: find the best moments in long videos, cut them, and caption them word by word. Driven over MCP, CLI and a local API."
+readme = "README.md"
+license = "Apache-2.0"
+license-files = ["LICENSE"]
+authors = [{ name = "BatuCani" }]
+requires-python = ">=3.12"
+keywords = ["video", "clips", "captions", "subtitles", "mcp", "agents", "whisper", "shorts", "reels"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Environment :: Console",
+    "Intended Audience :: End Users/Desktop",
+    "Operating System :: MacOS",
+    "Operating System :: POSIX :: Linux",
+    "Operating System :: Microsoft :: Windows",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Multimedia :: Video :: Conversion",
+]
+dependencies = [
+    "click>=8.1",
+    "fastapi>=0.115",
+    "faster-whisper>=1.2",
+    "httpx>=0.28",
+    "huggingface-hub>=0.30",
+    "keyring>=25",
+    "mcp>=2.3,<3",
+    "numpy>=2.0",
+    "onnxruntime>=1.20",
+    "platformdirs>=4.3",
+    "pydantic>=2.11",
+    "uvicorn>=0.34",
+    "yt-dlp>=2026.3.3",
+]
+
+[project.urls]
+Homepage = "https://github.com/BatuCani/reelferry"
+Repository = "https://github.com/BatuCani/reelferry"
+Issues = "https://github.com/BatuCani/reelferry/issues"
+
+[project.scripts]
+reelferry = "reelferry.cli:main"
+
+[dependency-groups]
+dev = [
+    "mypy>=1.15",
+    "poethepoet>=0.34",
+    "pytest>=8.3",
+    "pytest-timeout>=2.3",
+    "ruff>=0.11",
+]
+
+[build-system]
+requires = ["hatchling>=1.27"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/reelferry"]
+
+[tool.hatch.build.targets.sdist]
+include = ["src/reelferry", "tests", "README.md", "LICENSE", "pyproject.toml"]
+
+[tool.poe.tasks]
+format = { cmd = "ruff format .", help = "Format the code" }
+lint = { cmd = "ruff check .", help = "Lint the code" }
+typecheck = { cmd = "mypy", help = "Type check the code" }
+test = { cmd = "pytest", help = "Run the tests" }
+
+[tool.poe.tasks.check]
+help = "Run every check CI runs: format, lint, types, tests"
+sequence = [
+    { cmd = "ruff format --check ." },
+    { cmd = "ruff check ." },
+    { cmd = "mypy" },
+    { cmd = "pytest" },
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "W", "F", "I", "B", "UP", "SIM", "RUF", "C4", "PTH", "RET", "ARG", "PL", "TID"]
+ignore = [
+    "PLR0911", # many returns are fine in small dispatchers
+    "PLR0912",
+    "PLR0913",
+    "PLR0915",
+    "PLR2004", # magic values are clearer inline for media math
+    "PLC0415", # lazy imports keep startup fast and optional engines optional
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["ARG", "PLR"]
+
+[tool.mypy]
+python_version = "3.12"
+files = ["src", "tests"]
+strict = true
+plugins = ["pydantic.mypy"]
+warn_unreachable = true
+
+[[tool.mypy.overrides]]
+module = ["faster_whisper.*", "yt_dlp.*", "onnxruntime.*", "keyring.*", "ctranslate2.*"]
+ignore_missing_imports = true
+
+[tool.pydantic-mypy]
+init_forbid_extra = true
+init_typed = true
+warn_required_dynamic_aliases = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"
+timeout = 300
+markers = [
+    "ffmpeg: needs ffmpeg and ffprobe on PATH",
+    "libass: needs an ffmpeg build with the ass filter",
+]

@@ -1,0 +1,40 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+build/
+dist/
+*.egg-info/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Secrets and local configuration
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Local Reelferry state and media (never commit user data or videos)
+.reelferry/
+reelferry-data/
+media/
+output/
+*.mp4
+*.mov
+*.mkv
+*.webm
+*.m4a
+*.wav
+*.mp3
+*.db
+*.db-wal
+*.db-shm
+
+# Editors and OS
+.DS_Store
+.idea/
+.vscode/
