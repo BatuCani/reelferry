@@ -29,6 +29,8 @@ extraResources:
     to: RENDERER-THIRD-PARTY-LICENSES.txt
   - from: LICENSE
     to: LICENSE
+  - from: licenses/BridgeClip-MIT.txt
+    to: BridgeClip-MIT.txt
   - from: THIRD_PARTY_NOTICES.md
     to: THIRD_PARTY_NOTICES.md
   - from: src/renderer/assets/fonts/Geist-OFL.txt

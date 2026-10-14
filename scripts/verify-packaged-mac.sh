@@ -31,7 +31,7 @@ for required in \
   engine-bin/ffmpeg engine-bin/ffprobe engine-bin/yt-dlp \
   engine-bin/FFMPEG-LICENSE engine-bin/FFMPEG-SOURCE.tar.xz \
   engine-bin/BUNDLED_LIBRARIES.txt \
-  LICENSE THIRD_PARTY_NOTICES.md Geist-OFL.txt RENDERER-THIRD-PARTY-LICENSES.txt; do
+  LICENSE BridgeClip-MIT.txt THIRD_PARTY_NOTICES.md Geist-OFL.txt RENDERER-THIRD-PARTY-LICENSES.txt; do
   [[ -s "$resources/$required" ]] || {
     echo "Missing packaged resource: $required" >&2
     exit 1
