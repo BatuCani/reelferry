@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import contextlib
 import json
+import os
+import signal
 import sys
 import types as pytypes
 from enum import Enum
@@ -338,18 +340,23 @@ def mcp() -> None:
 
     from reelferry.app import App
     from reelferry.interfaces.mcp_server import run_stdio
-    from reelferry.jobs import Worker, stop_on_signals
+    from reelferry.jobs import Worker
 
     app = App()
     worker = Worker(app)
-    with stop_on_signals():
-        worker.start()
-        try:
-            anyio.run(run_stdio, app)
-        except KeyboardInterrupt:
-            pass
-        finally:
-            worker.stop()
+
+    def shutdown(signum: int, _frame: Any) -> None:
+        worker.stop()
+        os._exit(128 + signum)
+
+    for name in ("SIGINT", "SIGTERM", "SIGHUP"):
+        if hasattr(signal, name):
+            signal.signal(getattr(signal, name), shutdown)
+    worker.start()
+    try:
+        anyio.run(run_stdio, app)
+    finally:
+        worker.stop()
 
 
 @main.command()

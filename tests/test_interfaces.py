@@ -4,7 +4,10 @@ from __future__ import annotations
 
 import asyncio
 import json
+import signal
 import socket
+import subprocess
+import sys
 import threading
 import time
 from collections.abc import Iterator
@@ -236,3 +239,41 @@ def test_cli_wait_runs_the_job_inline(talk_video: Path, monkeypatch: pytest.Monk
     assert json.loads(out.output)["job"]["status"] == "succeeded"
     text = runner.invoke(main, ["transcript", "get", source_id, "--format", "text", "--json"])
     assert json.loads(text.output)["text"].startswith("Welcome back")
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="POSIX signals")
+def test_mcp_exits_on_sigterm_with_stdin_open_and_releases_its_job(app: App) -> None:
+    proc = subprocess.Popen(
+        [sys.executable, "-m", "reelferry", "mcp"],
+        stdin=subprocess.PIPE,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
+    try:
+        deadline = time.monotonic() + 30
+        row = None
+        while row is None and time.monotonic() < deadline:
+            row = app.db.one("SELECT id FROM workers")
+            time.sleep(0.1)
+        assert row is not None, "the mcp worker never registered"
+        app.db.execute(
+            "INSERT INTO jobs (id, kind, status, input, lease_owner, lease_expires_at, attempts,"
+            " created_at, updated_at) VALUES ('job_held', 'suggest_clips', 'running', '{}', ?,"
+            " ?, 1, 'now', 'now')",
+            (row["id"], time.time() + 600),
+        )
+
+        proc.send_signal(signal.SIGTERM)
+        assert proc.wait(timeout=15) == 128 + signal.SIGTERM
+    finally:
+        if proc.poll() is None:
+            proc.kill()
+            proc.wait()
+        assert proc.stdin is not None
+        proc.stdin.close()
+
+    held = app.jobs.get("job_held")
+    assert held.status.value == "running"
+    assert held.attempts == 0
+    assert app.jobs.claim("wrk_next") == "job_held"
+    assert app.db.one("SELECT id FROM workers") is None

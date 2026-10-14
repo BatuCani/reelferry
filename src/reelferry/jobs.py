@@ -298,7 +298,7 @@ class StopSignal:
 
     def __init__(self) -> None:
         self._event = threading.Event()
-        self._lock = threading.Lock()
+        self._lock = threading.RLock()
         self._procs: set[subprocess.Popen[str]] = set()
 
     def is_set(self) -> bool:

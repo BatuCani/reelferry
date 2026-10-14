@@ -359,3 +359,30 @@ def test_probe_runs_outside_the_terminal_process_group(tmp_path: Any) -> None:
     info = probe(FFmpeg("ffmpeg", str(fake), "test", frozenset(), frozenset()), media)
     assert info["duration"] == 1
     assert int((tmp_path / "talk.wav.pgid").read_text()) != os.getpgid(0)
+
+
+def test_a_second_interrupt_while_stopping_does_not_deadlock() -> None:
+    stopping = jobs.StopSignal()
+    errors: list[BaseException] = []
+
+    class SignalDuringKill:
+        signaled = False
+
+        def kill(self) -> None:
+            if not self.signaled:
+                self.signaled = True
+                stopping.set()
+
+    def stop() -> None:
+        try:
+            with stopping.track(SignalDuringKill()):  # type: ignore[arg-type]
+                stopping.set()
+        except BaseException as exc:
+            errors.append(exc)
+
+    thread = threading.Thread(target=stop, daemon=True)
+    thread.start()
+    thread.join(5)
+    assert not thread.is_alive()
+    assert errors == []
+    assert stopping.is_set()
