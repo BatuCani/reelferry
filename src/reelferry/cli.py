@@ -346,7 +346,7 @@ def mcp() -> None:
     worker = Worker(app)
 
     def shutdown(signum: int, _frame: Any) -> None:
-        worker.stop()
+        worker.stop(timeout=0)
         os._exit(128 + signum)
 
     for name in ("SIGINT", "SIGTERM", "SIGHUP"):
