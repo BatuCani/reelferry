@@ -1,0 +1,24 @@
+name: Bug report
+description: Report a reproducible BridgeClip problem without private data.
+body:
+  - type: input
+    id: version
+    attributes:
+      label: BridgeClip version and operating system
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce with a public or dummy source
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected and actual behavior
+    validations:
+      required: true
+  - type: markdown
+    attributes:
+      value: Do not include provider keys, private media, or raw logs. Report security issues using SECURITY.md.
