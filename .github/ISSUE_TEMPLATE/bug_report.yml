@@ -1,10 +1,10 @@
 name: Bug report
-description: Report a reproducible BridgeClip problem without private data.
+description: Report a reproducible Reelferry problem without private data.
 body:
   - type: input
     id: version
     attributes:
-      label: BridgeClip version and operating system
+      label: Reelferry version and operating system
     validations:
       required: true
   - type: textarea

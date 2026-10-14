@@ -23,7 +23,7 @@ def verify(resources):
 
 if __name__ == "__main__":
     # A copy catches absolute shebangs, missing DLLs, and build-machine paths.
-    with tempfile.TemporaryDirectory(prefix="BridgeClip installed test ") as temporary:
+    with tempfile.TemporaryDirectory(prefix="Reelferry installed test ") as temporary:
         destination = Path(temporary) / "resources"
         shutil.copytree(sys.argv[1], destination, symlinks=False)
         verify(destination)

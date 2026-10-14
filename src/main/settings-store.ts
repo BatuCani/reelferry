@@ -4,7 +4,7 @@ import { isAbsolute, join } from 'path'
 import { randomUUID } from 'crypto'
 
 /**
- * BridgeClip is bring-your-own-key: every provider call is made from this
+ * Reelferry is bring-your-own-key: every provider call is made from this
  * machine with the user's own keys. Keys are encrypted with the OS keychain
  * (safeStorage) when it is available.
  */
@@ -30,7 +30,7 @@ type SecretKey = (typeof SECRET_KEYS)[number]
 const DEFAULT_SETTINGS: AppSettings = {
   openrouterApiKey: '',
   zernioApiKey: '',
-  outputDirectory: join(app.getPath('home'), 'BridgeClip'),
+  outputDirectory: join(app.getPath('home'), 'Reelferry'),
   pythonPath: process.platform === 'win32' ? 'python' : 'python3',
   customVocabulary: ''
 }

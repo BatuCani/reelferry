@@ -269,7 +269,7 @@ export function buildCreatePostBody(request: PostClipRequest, context: PostBodyC
     content: request.caption,
     mediaItems: [{ type: 'video', url: context.publicUrl }],
     platforms,
-    metadata: { source: 'bridgeclip' }
+    metadata: { source: 'reelferry' }
   }
   if (options.youtube?.tags?.length) body.tags = options.youtube.tags
   if (request.timing.mode === 'now') {
@@ -302,7 +302,7 @@ const POST_URL_HOSTS: Record<ZernioPlatform, readonly string[]> = {
   threads: ['threads.net', 'threads.com']
 }
 
-/** True for an https link on the platform's own site; the only links BridgeClip opens. */
+/** True for an https link on the platform's own site; the only links Reelferry opens. */
 export function isPostUrl(value: unknown, platform: string): value is string {
   if (typeof value !== 'string' || value.length > 2048 || !isZernioPlatform(platform)) return false
   try {

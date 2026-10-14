@@ -61,7 +61,7 @@ export function PostsPage({ onNavigate }: { onNavigate: (page: Page) => void }):
             className="mt-4"
             icon={<Send />}
             title="Connect your social accounts"
-            description="Clips you post or schedule from BridgeClip show up here once Zernio is set up in Accounts."
+            description="Clips you post or schedule from Reelferry show up here once Zernio is set up in Accounts."
             action={<Button variant="primary" onClick={() => onNavigate('accounts')}>Open Accounts</Button>}
           />
         </>
@@ -70,7 +70,7 @@ export function PostsPage({ onNavigate }: { onNavigate: (page: Page) => void }):
   )
 }
 
-/** Posts made from BridgeClip: scheduled, failed and recent, with cancel, retry and links. */
+/** Posts made from Reelferry: scheduled, failed and recent, with cancel, retry and links. */
 function PostsList({ onNavigate }: { onNavigate: (page: Page) => void }): React.JSX.Element {
   const { posts, loaded, refreshing, error, clearError, refresh } = usePostsStore()
   const [showAll, setShowAll] = useState(false)
@@ -156,7 +156,7 @@ function PostsList({ onNavigate }: { onNavigate: (page: Page) => void }): React.
           </Panel>
         )}
 
-        <p className="px-1 text-2xs text-ink-subtle">Zernio publishes scheduled posts even when BridgeClip is closed.</p>
+        <p className="px-1 text-2xs text-ink-subtle">Zernio publishes scheduled posts even when Reelferry is closed.</p>
       </div>
     </>
   )

@@ -174,7 +174,7 @@ function data(): { workspace: string; automations: Automation[] } {
     for (const automation of cached) for (const item of automation.content) {
       if (item.status === 'posting') {
         item.status = 'needs_review'
-        item.error = 'BridgeClip closed while posting. Check Zernio before returning this clip to the queue.'
+        item.error = 'Reelferry closed while posting. Check Zernio before returning this clip to the queue.'
         recovered = true
       } else if (item.status === 'needs_review' && !item.postId &&
           (item.error === 'The upload was interrupted. Check your connection and try again.' ||

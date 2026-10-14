@@ -1,8 +1,8 @@
 // Social accounts are connected through the user's own Zernio workspace
 // (https://zernio.com). Zernio owns each platform's OAuth app and token
-// refresh; BridgeClip only ever holds the user's Zernio API key.
+// refresh; Reelferry only ever holds the user's Zernio API key.
 
-/** Platforms BridgeClip offers to connect, in display order. Values are Zernio's API names. */
+/** Platforms Reelferry offers to connect, in display order. Values are Zernio's API names. */
 export const ZERNIO_PLATFORMS = ['tiktok', 'youtube', 'instagram', 'facebook', 'twitter', 'linkedin', 'threads'] as const
 export type ZernioPlatform = (typeof ZERNIO_PLATFORMS)[number]
 
@@ -42,7 +42,7 @@ export interface ZernioProfile {
 
 export const ZERNIO_PROFILE_NAME_MAX = 80
 
-/** A profile name BridgeClip will send: 1–80 visible characters, no control characters. */
+/** A profile name Reelferry will send: 1–80 visible characters, no control characters. */
 export function isValidProfileName(value: unknown): value is string {
   return typeof value === 'string' && value.trim().length > 0 && value.trim().length <= ZERNIO_PROFILE_NAME_MAX &&
     !Array.from(value).some((character) => character.charCodeAt(0) <= 31 || character.charCodeAt(0) === 127)
@@ -50,7 +50,7 @@ export function isValidProfileName(value: unknown): value is string {
 
 export interface ZernioAccount {
   id: string
-  /** Zernio platform name; can be one BridgeClip doesn't offer (connected elsewhere). */
+  /** Zernio platform name; can be one Reelferry doesn't offer (connected elsewhere). */
   platform: string
   username: string | null
   displayName: string | null
@@ -87,7 +87,7 @@ export interface ZernioConnectResult {
   ended?: 'timeout' | 'unknown'
 }
 
-/** Accounts BridgeClip can post to: active and not waiting for a new sign-in. */
+/** Accounts Reelferry can post to: active and not waiting for a new sign-in. */
 export function isPostableAccount(account: ZernioAccount): boolean {
   return account.isActive && !account.needsReconnect && account.canPost !== false && !account.overLimit
 }
@@ -98,7 +98,7 @@ export type ZernioErrorKind = 'auth' | 'offline' | 'rate_limit' | 'payment' | 'n
 export interface ZernioErrorInfo {
   message: string
   kind: ZernioErrorKind
-  /** Offer BridgeClip's fixed link to Zernio billing. */
+  /** Offer Reelferry's fixed link to Zernio billing. */
   billing?: boolean
   retryAfterSeconds?: number
 }

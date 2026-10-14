@@ -1,7 +1,7 @@
 import { useSyncExternalStore } from 'react'
 import { create } from 'zustand'
 
-const COLLAPSED_STORAGE_KEY = 'bridgeclip.sidebar.collapsed'
+const COLLAPSED_STORAGE_KEY = 'reelferry.sidebar.collapsed'
 
 /** Windows narrower than this always get the icon rail, whatever the preference. */
 const WIDE_QUERY = '(min-width: 1024px)'

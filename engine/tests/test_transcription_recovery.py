@@ -238,7 +238,7 @@ def request(service, monkeypatch, tmp_path, *, status=200, body=None, headers=No
         return httpx.Response(status, stream=body, headers=headers)
 
     monkeypatch.setattr(httpx, "AsyncClient", lambda **kwargs: real_client(transport=httpx.MockTransport(handle), **kwargs))
-    result = asyncio.run(service._request_transcript(str(audio), "en", ["BridgeClip"], WHISPER))
+    result = asyncio.run(service._request_transcript(str(audio), "en", ["Reelferry"], WHISPER))
     return result, calls, body
 
 
@@ -262,7 +262,7 @@ def test_fallback_model_request_retains_word_timing_contract(service, monkeypatc
     assert payload["model"] == WHISPER
     assert payload["timestamp_granularities"] == ["segment", "word"]
     assert payload["response_format"] == "verbose_json"
-    assert payload["provider"]["options"]["groq"]["prompt"] == "Expected vocabulary: BridgeClip"
+    assert payload["provider"]["options"]["groq"]["prompt"] == "Expected vocabulary: Reelferry"
     assert "azure" not in payload["provider"]["options"]
     assert body.closed
 

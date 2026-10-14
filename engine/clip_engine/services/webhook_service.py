@@ -145,13 +145,13 @@ class WebhookService:
         self._send_semaphore = asyncio.Semaphore(settings.webhook_max_concurrent_requests)
 
         # Get webhook signing secret from config
-        self._webhook_secret = settings.bridgeclip_webhook_secret
-        self._allowed_hosts = settings.bridgeclip_webhook_allowed_hosts
+        self._webhook_secret = settings.reelferry_webhook_secret
+        self._allowed_hosts = settings.reelferry_webhook_allowed_hosts
         if self._webhook_secret:
             logger.info("Webhook HMAC signing enabled")
         else:
             logger.warning(
-                "BRIDGECLIP_WEBHOOK_SECRET not configured - webhooks will not be signed"
+                "REELFERRY_WEBHOOK_SECRET not configured - webhooks will not be signed"
             )
 
         self._max_connections = settings.webhook_max_connections
@@ -240,7 +240,7 @@ class WebhookService:
 
         default_headers = {
             "Content-Type": "application/json",
-            "User-Agent": "BridgeClip-Engine/2.0",
+            "User-Agent": "Reelferry-Engine/2.0",
             "X-Webhook-Event": payload.event,
             "X-Job-Id": payload.job_id,
         }
@@ -248,7 +248,7 @@ class WebhookService:
         # Add HMAC signature if secret is configured
         signature = self._sign_payload(payload_json)
         if signature:
-            default_headers["X-BridgeClip-Webhook-Signature"] = signature
+            default_headers["X-Reelferry-Webhook-Signature"] = signature
 
         if headers:
             default_headers.update(headers)

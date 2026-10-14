@@ -1,12 +1,12 @@
 'use strict'
-// End to end: an isolated BridgeClip (hidden window, own userData, mock
+// End to end: an isolated Reelferry (hidden window, own userData, mock
 // keychain) posts a real clip from the Library to a local mock Zernio, then
 // cancels a scheduled post from the Accounts page. No real key or account.
 //
 //   npm run test:e2e
 //
-// Set BRIDGECLIP_E2E_SKIP_BUILD=1 to reuse the last build, and
-// BRIDGECLIP_E2E_SHOTS=<dir> to save screenshots of each step.
+// Set REELFERRY_E2E_SKIP_BUILD=1 to reuse the last build, and
+// REELFERRY_E2E_SHOTS=<dir> to save screenshots of each step.
 
 const test = require('node:test')
 const assert = require('node:assert/strict')
@@ -22,7 +22,7 @@ const { buildApp, launchApp, ROOT } = require('./support/electron-app.cjs')
 const KEY = 'e2e-zernio-key-not-a-secret'
 const FFMPEG = fs.existsSync(path.join(ROOT, 'engine-bin', 'ffmpeg')) ? path.join(ROOT, 'engine-bin', 'ffmpeg') : 'ffmpeg'
 const CLIP_TITLE = 'Agents that test their own code'
-const SHOTS = process.env.BRIDGECLIP_E2E_SHOTS
+const SHOTS = process.env.REELFERRY_E2E_SHOTS
 
 function toLocalInput(ms) {
   const d = new Date(ms)
@@ -77,7 +77,7 @@ let appDir = null
  * registered on `t` before anything launches.
  */
 async function start(t, { titles, key = true, tiktokLane = null } = {}) {
-  const work = fs.mkdtempSync(path.join(os.tmpdir(), 'bridgeclip-posts-e2e-'))
+  const work = fs.mkdtempSync(path.join(os.tmpdir(), 'reelferry-posts-e2e-'))
   const posting = createPostingMock()
   const mock = await createMockZernio({ apiKey: KEY, extraRoutes: posting.routes })
   let app = null
@@ -95,14 +95,14 @@ async function start(t, { titles, key = true, tiktokLane = null } = {}) {
   if (tiktokLane) mock.setHealth(accounts.tiktok._id, { integrationLane: tiktokLane })
   const userDataDir = path.join(work, 'userData')
   // launchApp seeds settings (no keys) with this folder, inside the isolated dir, as the Library.
-  const clipPaths = seedLibrary(path.join(userDataDir, 'BridgeClip'), titles)
-  appDir ??= buildApp(process.env.BRIDGECLIP_E2E_APP_DIR || path.join(os.tmpdir(), 'bridgeclip-posts-e2e-app'))
+  const clipPaths = seedLibrary(path.join(userDataDir, 'Reelferry'), titles)
+  appDir ??= buildApp(process.env.REELFERRY_E2E_APP_DIR || path.join(os.tmpdir(), 'reelferry-posts-e2e-app'))
   app = await launchApp({ appDir, userDataDir, mock })
   // Links never reach a real browser from a test run.
   await app.app.evaluate(({ shell }) => { shell.openExternal = async () => {} })
   if (key) {
     // Through the app, so the mock keychain encrypts it.
-    await app.page.evaluate((value) => window.bridgeclip.settings.replaceApiKey('zernioApiKey', value), KEY)
+    await app.page.evaluate((value) => window.reelferry.settings.replaceApiKey('zernioApiKey', value), KEY)
     await app.page.reload()
     await app.page.waitForLoadState('domcontentloaded')
   }
@@ -318,7 +318,7 @@ test('many accounts across profiles: several TikToks with their own privacy choi
     commercialContentTypes: []
   }
   // The app only knows the new accounts after a sync, as when you come back from connecting them.
-  await page.evaluate(() => window.bridgeclip.zernio.sync())
+  await page.evaluate(() => window.reelferry.zernio.sync())
   await page.reload()
   await page.waitForLoadState('domcontentloaded')
 

@@ -58,7 +58,7 @@ function ipcWithLibrary(library) {
 }
 
 test('MAIN-1: shell opening rejects macOS package directories beyond .app/.bundle', async () => {
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'bridgeclip-audit-packages-'))
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'reelferry-audit-packages-'))
   try {
     const library = path.join(root, 'library')
     fs.mkdirSync(library)
@@ -81,7 +81,7 @@ test('MAIN-1: shell opening rejects macOS package directories beyond .app/.bundl
 })
 
 test('MAIN-1: ordinary library folders, including dotted names, still open', async () => {
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'bridgeclip-audit-folders-'))
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'reelferry-audit-folders-'))
   try {
     const library = path.join(root, 'My.Clips')
     fs.mkdirSync(library)

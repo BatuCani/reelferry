@@ -21,11 +21,11 @@ def _answer(address, family=socket.AF_INET):
 
 def test_media_children_drop_secrets_proxies_and_loader_hooks(monkeypatch):
     for name, value in {
-        "OPENROUTER_API_KEY": "secret", "AWS_SECRET_ACCESS_KEY": "secret", "BRIDGECLIP_API_KEY": "secret",
+        "OPENROUTER_API_KEY": "secret", "AWS_SECRET_ACCESS_KEY": "secret", "REELFERRY_API_KEY": "secret",
         "HTTP_PROXY": "http://127.0.0.1:1", "HTTPS_PROXY": "http://127.0.0.1:1", "ALL_PROXY": "socks5://127.0.0.1:1",
         "PYTHONPATH": "/tmp/site", "PYTHONSTARTUP": "/tmp/hook.py", "DYLD_INSERT_LIBRARIES": "/tmp/evil.dylib",
         "LD_PRELOAD": "/tmp/evil.so", "SSL_CERT_FILE": "/tmp/ca.pem", "REQUESTS_CA_BUNDLE": "/tmp/ca.pem",
-        "BRIDGECLIP_WORK_ROOT": "/tmp/work", "LOCAL_OUTPUT_DIR": "/tmp/out",
+        "REELFERRY_WORK_ROOT": "/tmp/work", "LOCAL_OUTPUT_DIR": "/tmp/out",
     }.items():
         monkeypatch.setenv(name, value)
     monkeypatch.setenv("PATH", "/usr/bin:/bin")

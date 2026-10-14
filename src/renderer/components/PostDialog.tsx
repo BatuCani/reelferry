@@ -1176,7 +1176,7 @@ function WhenField({ mode, onModeChange, value, onValueChange, min, max, problem
           {problem ? (
             <p role="alert" className="mt-2 text-xs text-danger">{problem}</p>
           ) : (
-            <p className="mt-2 text-xs leading-relaxed text-ink-subtle">Zernio publishes it at this time, even when BridgeClip is closed. Up to 6½ days ahead, because Zernio keeps uploads for 7 days.</p>
+            <p className="mt-2 text-xs leading-relaxed text-ink-subtle">Zernio publishes it at this time, even when Reelferry is closed. Up to 6½ days ahead, because Zernio keeps uploads for 7 days.</p>
           )}
         </div>
       )}

@@ -564,7 +564,7 @@ function StartedPanel({ className, onViewJob }: { className?: string; onViewJob?
       <p className="mt-1 max-w-md text-xs text-ink-subtle">
         {started.queued
           ? `Up to ${MAX_PARALLEL_JOBS} jobs run at once. This one starts as soon as a slot frees up.`
-          : 'It keeps running while you queue more videos or use the rest of BridgeClip.'}
+          : 'It keeps running while you queue more videos or use the rest of Reelferry.'}
       </p>
       <div className="mt-5 flex flex-wrap items-center justify-center gap-2">
         <Button variant="primary" icon={<Plus className="h-3.5 w-3.5" />} onClick={startAnother}>

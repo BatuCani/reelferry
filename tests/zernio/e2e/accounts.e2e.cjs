@@ -1,11 +1,11 @@
 'use strict'
-// End-to-end: the real BridgeClip app (production build, isolated userData,
+// End-to-end: the real Reelferry app (production build, isolated userData,
 // hidden window) against the mock Zernio and its scripted browser.
 //
 //   npm run test:e2e
 //
-// Optional: BRIDGECLIP_E2E_APP_DIR (build folder), BRIDGECLIP_E2E_SKIP_BUILD=1
-// (reuse the last build), BRIDGECLIP_E2E_SHOTS (folder for screenshots).
+// Optional: REELFERRY_E2E_APP_DIR (build folder), REELFERRY_E2E_SKIP_BUILD=1
+// (reuse the last build), REELFERRY_E2E_SHOTS (folder for screenshots).
 
 const test = require('node:test')
 const assert = require('node:assert/strict')
@@ -20,8 +20,8 @@ const TIMEOUT = 15_000
 
 test('accounts: set up, connect, reconnect, disconnect, recover and work offline', { timeout: 300_000 }, async (t) => {
   const appDir = buildApp()
-  const userDataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'bridgeclip-e2e-userdata-'))
-  const shots = process.env.BRIDGECLIP_E2E_SHOTS
+  const userDataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'reelferry-e2e-userdata-'))
+  const shots = process.env.REELFERRY_E2E_SHOTS
   const mock = await createMockZernio({ apiKey: KEY })
   const [profile] = mock.state.profiles
   mock.addProfile('Brand')

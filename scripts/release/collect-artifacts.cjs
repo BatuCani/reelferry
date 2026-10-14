@@ -29,7 +29,7 @@ async function collect(root, output, version, sourceSha, platform = 'all') {
     const doc = yaml.load(fs.readFileSync(path.join(directory, contract.metadata), 'utf8'))
     if (doc.version !== version) throw new Error(`Wrong ${target} version`)
     const platform = target.startsWith('mac-') ? 'mac' : target.startsWith('windows-') ? 'win' : 'linux'
-    const expectedNames = new Set(contract.extensions.map(extension => `BridgeClip-${version}-${platform}-${target.split('-').at(-1)}.${extension}`))
+    const expectedNames = new Set(contract.extensions.map(extension => `Reelferry-${version}-${platform}-${target.split('-').at(-1)}.${extension}`))
     for (const file of doc.files || []) {
       if (!expectedNames.has(file.url)) throw new Error(`Unexpected ${target} updater entry: ${file.url}`)
     }
@@ -37,7 +37,7 @@ async function collect(root, output, version, sourceSha, platform = 'all') {
     const docs = metadata.get(contract.metadata) || []
     docs.push(doc); metadata.set(contract.metadata, docs)
     for (const extension of contract.extensions) {
-      const name = `BridgeClip-${version}-${platform}-${target.split('-').at(-1)}.${extension}`
+      const name = `Reelferry-${version}-${platform}-${target.split('-').at(-1)}.${extension}`
       const file = path.join(directory, name)
       if (!fs.lstatSync(file).isFile()) throw new Error(`Missing release asset ${name}`)
       // These are the actual updater payloads for each platform. A valid hash
@@ -48,7 +48,7 @@ async function collect(root, output, version, sourceSha, platform = 'all') {
       fs.copyFileSync(file, path.join(output, name), fs.constants.COPYFILE_EXCL)
     }
     for (const name of fs.readdirSync(directory)) {
-      if (/^(node-sbom-|python-packages-|verification-).+\.json$/.test(name) || /^BridgeClip-[A-Za-z0-9._-]+\.blockmap$/.test(name)) {
+      if (/^(node-sbom-|python-packages-|verification-).+\.json$/.test(name) || /^Reelferry-[A-Za-z0-9._-]+\.blockmap$/.test(name)) {
         if (!fs.lstatSync(path.join(directory, name)).isFile()) throw new Error('Non-file release evidence')
         fs.copyFileSync(path.join(directory, name), path.join(output, name), fs.constants.COPYFILE_EXCL)
       }
@@ -60,7 +60,7 @@ async function collect(root, output, version, sourceSha, platform = 'all') {
     const data = fs.readFileSync(path.join(output, name))
     entries.push({ name, size: data.length, sha256: crypto.createHash('sha256').update(data).digest('hex') })
   }
-  fs.writeFileSync(path.join(output, 'release-manifest.json'), JSON.stringify({ version, platform, sourceRepository: 'bridge-mind/bridgeclip', sourceSha, files: entries }, null, 2) + '\n')
+  fs.writeFileSync(path.join(output, 'release-manifest.json'), JSON.stringify({ version, platform, sourceRepository: 'BatuCani/reelferry', sourceSha, files: entries }, null, 2) + '\n')
   const manifest = fs.readFileSync(path.join(output, 'release-manifest.json'))
   fs.writeFileSync(path.join(output, 'SHA256SUMS.txt'), entries.map(entry => `${entry.sha256}  ${entry.name}\n`).join('') + `${crypto.createHash('sha256').update(manifest).digest('hex')}  release-manifest.json\n`)
 }

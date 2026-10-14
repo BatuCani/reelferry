@@ -4,7 +4,7 @@ import { useIsWide, useSidebarExpanded, useSidebarStore } from '../store/use-sid
 import { useActiveJobs } from '../store/use-job-store'
 import { useSetupState } from '../store/use-settings-store'
 import { APP_VERSION } from '../config/brand'
-import { BridgeClipLogo } from './brand/BridgeClipLogo'
+import { ReelferryLogo } from './brand/ReelferryLogo'
 import { ProgressBar } from './ui/ProgressBar'
 import { StatusDot } from './ui/Badge'
 import { STAGE_LABELS } from './JobProgress'
@@ -51,7 +51,7 @@ export function Sidebar({ currentPage, onNavigate }: SidebarProps): React.JSX.El
       <div className={cn('flex h-9 items-center pb-3', expanded ? 'justify-between pl-4 pr-2.5' : 'justify-center px-2')}>
         {expanded ? (
           <>
-            <BridgeClipLogo className="h-5" />
+            <ReelferryLogo className="h-5" />
             <SidebarToggle />
           </>
         ) : (
@@ -94,7 +94,7 @@ function SidebarToggle({ rail = false }: { rail?: boolean }): React.JSX.Element 
   const wide = useIsWide()
   const expanded = useSidebarExpanded()
   const toggle = useSidebarStore((s) => s.toggle)
-  if (rail && !wide) return <BridgeClipLogo variant="mark" className="h-6" />
+  if (rail && !wide) return <ReelferryLogo variant="mark" className="h-6" />
   const label = expanded ? 'Collapse sidebar' : 'Expand sidebar'
   const hint = `${label} (${MOD_KEY}${SIDEBAR_SHORTCUT_KEY})`
   if (!rail && !wide) return <span />
@@ -112,7 +112,7 @@ function SidebarToggle({ rail = false }: { rail?: boolean }): React.JSX.Element 
     >
       {rail ? (
         <>
-          <BridgeClipLogo variant="mark" className="h-6 transition-opacity duration-150 group-hover/toggle:opacity-0 group-focus-visible/toggle:opacity-0" />
+          <ReelferryLogo variant="mark" className="h-6 transition-opacity duration-150 group-hover/toggle:opacity-0 group-focus-visible/toggle:opacity-0" />
           <PanelLeftOpen className="absolute h-4 w-4 opacity-0 transition-opacity duration-150 group-hover/toggle:opacity-100 group-focus-visible/toggle:opacity-100" strokeWidth={1.9} />
         </>
       ) : (

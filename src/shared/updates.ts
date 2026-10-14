@@ -1,6 +1,6 @@
 // In-app updates, as the main process reports them to the renderer.
 
-/** Why this copy of BridgeClip does not update itself. */
+/** Why this copy of Reelferry does not update itself. */
 export type UpdatesOffReason =
   /** Running from source (`npm run dev`) or an unpackaged build. */
   | 'development'
@@ -8,7 +8,7 @@ export type UpdatesOffReason =
   | 'unofficial'
   /** macOS is running the app from the disk image or a quarantined download, which can't be replaced. */
   | 'move-to-applications'
-  /** Turned off with BRIDGECLIP_DISABLE_AUTO_UPDATE. */
+  /** Turned off with REELFERRY_DISABLE_AUTO_UPDATE. */
   | 'disabled'
 
 export interface UpdateProgress {
@@ -33,7 +33,7 @@ export type UpdateState = Base & (
   | { status: 'downloading'; version: string; progress: UpdateProgress | null }
   /**
    * Downloaded and checked against its SHA-512 (and on Windows, its signature):
-   * installs on restart, or the next time BridgeClip quits. On macOS, Squirrel
+   * installs on restart, or the next time Reelferry quits. On macOS, Squirrel
    * checks the signature just after this; a failure there becomes 'error'.
    */
   | { status: 'ready'; version: string }

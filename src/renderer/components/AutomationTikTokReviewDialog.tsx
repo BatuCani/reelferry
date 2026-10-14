@@ -93,7 +93,7 @@ export function AutomationTikTokReviewDialog({ automationId, contentId, title, o
       <div className="border-b border-white/[0.07] px-5 py-4">
         <h2 id={titleId} className="text-base font-semibold text-ink">Review for TikTok</h2>
         <p className="mt-1 text-sm text-ink-muted">{title}</p>
-        <p className="mt-2 text-xs text-ink-subtle">This clip waits until you approve it here. It will then submit at a daily posting time while BridgeClip is open, or when you choose Run now. Closing this review leaves the clip waiting for approval.</p>
+        <p className="mt-2 text-xs text-ink-subtle">This clip waits until you approve it here. It will then submit at a daily posting time while Reelferry is open, or when you choose Run now. Closing this review leaves the clip waiting for approval.</p>
       </div>
       <div className="min-h-0 overflow-y-auto p-5">
         {error && <Callout tone="danger" className="mb-3" action={!saving && <Button size="sm" onClick={() => setRetry((value) => value + 1)}>Reload review</Button>}>{error}</Callout>}

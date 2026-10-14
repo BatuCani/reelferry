@@ -26,7 +26,7 @@ export function loadThumbnail(videoPath: string, seekSeconds?: number): Promise<
   return task
 }
 
-/** file:///a/b.mp4 → /a/b.mp4; plain paths pass through. BridgeClip engine writes the
+/** file:///a/b.mp4 → /a/b.mp4; plain paths pass through. Reelferry engine writes the
  *  raw path after the scheme (not percent-encoded), so don't decode it. */
 export function clipFilePath(url: string): string {
   return url.startsWith('file://') ? url.slice('file://'.length) : url

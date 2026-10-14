@@ -2,7 +2,7 @@
 
 The guard checks the address passed to connect, after DNS resolution. This
 also catches redirects and DNS changes made after the UI's initial URL check.
-It is installed only in BridgeClip's local worker process.
+It is installed only in Reelferry's local worker process.
 """
 
 import ipaddress

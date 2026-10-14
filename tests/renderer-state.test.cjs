@@ -19,7 +19,7 @@ const bundle = buildSync({
 
 function load(api = {}) {
   const module = { exports: {} }
-  vm.runInNewContext(bundle, { module, exports: module.exports, require, window: { bridgeclip: api } })
+  vm.runInNewContext(bundle, { module, exports: module.exports, require, window: { reelferry: api } })
   return module.exports
 }
 

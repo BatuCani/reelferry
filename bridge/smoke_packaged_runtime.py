@@ -26,7 +26,7 @@ def main():
     assert BRIDGE_CONTRACT_VERSION == 2 and LayoutAnalyzer().available
     assert cv2.__version__ and yt_dlp.version.__version__
     subprocess.run([str(binaries / f"yt-dlp{suffix}"), "--version"], check=True, timeout=20)
-    with tempfile.TemporaryDirectory(prefix="BridgeClip packaged smoke ") as temporary:
+    with tempfile.TemporaryDirectory(prefix="Reelferry packaged smoke ") as temporary:
         work = Path(temporary)
         source, output = work / "source.mp4", work / "output.mp4"
         subprocess.run([ffmpeg, "-v", "error", "-y", "-f", "lavfi", "-i", "testsrc2=s=320x240:r=30:d=4", "-f", "lavfi", "-i", "sine=frequency=440:duration=4", "-c:v", "mpeg4", "-c:a", "aac", "-shortest", str(source)], check=True, timeout=30)

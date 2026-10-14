@@ -19,12 +19,12 @@ async function choose(page, combobox, name) {
 }
 
 test('add library clips, review TikTok, and run a mixed-platform automation', { timeout: 180_000 }, async (t) => {
-  const work = fs.mkdtempSync(path.join(os.tmpdir(), 'bridgeclip-automation-e2e-'))
+  const work = fs.mkdtempSync(path.join(os.tmpdir(), 'reelferry-automation-e2e-'))
   const clip = path.join(work, 'new_clip.mp4')
   execFileSync(FFMPEG, ['-v', 'error', '-y', '-f', 'lavfi', '-i', 'color=c=green:s=360x640:d=4:r=15',
     '-f', 'lavfi', '-i', 'sine=frequency=440:duration=4', '-shortest', '-c:v', 'mpeg4', '-q:v', '8',
     '-c:a', 'aac', '-movflags', '+faststart', clip])
-  const run = path.join(work, 'userData', 'BridgeClip', 'automation-library-run')
+  const run = path.join(work, 'userData', 'Reelferry', 'automation-library-run')
   fs.mkdirSync(run, { recursive: true })
   const clips = ['first.mp4', 'second.mp4'].map((name) => {
     const target = path.join(run, name)
@@ -52,10 +52,10 @@ test('add library clips, review TikTok, and run a mixed-platform automation', { 
   const appDir = buildApp(path.join(work, 'app'))
   session = await launchApp({ appDir, userDataDir: path.join(work, 'userData'), mock })
   const { page, app } = session
-  await page.evaluate((key) => window.bridgeclip.settings.replaceApiKey('zernioApiKey', key), KEY)
+  await page.evaluate((key) => window.reelferry.settings.replaceApiKey('zernioApiKey', key), KEY)
   await page.reload()
   await page.getByRole('navigation', { name: 'Main' }).getByRole('button', { name: /Automations/ }).click()
-  await page.getByLabel('Automation name').fill('BridgeMind')
+  await page.getByLabel('Automation name').fill('Daily highlights')
   await page.locator('form').getByRole('button', { name: 'Create' }).click()
   await page.getByRole('heading', { name: 'Content bank' }).waitFor()
 
@@ -80,7 +80,7 @@ test('add library clips, review TikTok, and run a mixed-platform automation', { 
   await page.getByRole('button', { name: 'Save changes' }).click()
   await page.getByText('Changes saved.').waitFor()
   await page.getByRole('switch', { name: 'Automation on' }).click()
-  await page.getByText('BridgeMind is on.').waitFor()
+  await page.getByText('Daily highlights is on.').waitFor()
 
   await page.getByRole('navigation', { name: 'Main' }).getByRole('button', { name: /Library/ }).click()
   await page.getByText('Automation library run').click()

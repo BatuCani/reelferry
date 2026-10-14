@@ -6,7 +6,7 @@ if [[ "$(uname -s)" != "Darwin" ]]; then
   exit 1
 fi
 
-# BridgeClip engine burns captions with the ASS filter. A build without libass appears
+# Reelferry engine burns captions with the ASS filter. A build without libass appears
 # healthy until every captioned render fails, including the fallback render.
 if ! command -v pkg-config >/dev/null || ! pkg-config --exists libass; then
   echo "Install pkg-config and libass before building FFmpeg" >&2
@@ -22,7 +22,7 @@ output_dir="${1:-engine-bin}"
 version="8.1.3"
 source_hash="7138d28c96d9d3e3af4ee3d8cad72741f8ffb40da90c1112235dea3ecd3178a3"
 source_url="https://ffmpeg.org/releases/ffmpeg-${version}.tar.xz"
-work_dir="$(mktemp -d -t bridgeclip-ffmpeg)"
+work_dir="$(mktemp -d -t reelferry-ffmpeg)"
 trap 'rm -rf "$work_dir"' EXIT
 
 curl --fail --show-error --location --retry 3 "$source_url" -o "$work_dir/ffmpeg.tar.xz"
@@ -48,7 +48,7 @@ FFmpeg $version source: $source_url
 Source SHA-256: $source_hash
 The complete source archive is included as FFMPEG-SOURCE.tar.xz.
 Built with GPL and nonfree components disabled. The exact build configuration
-is available from ffmpeg -version and scripts/build-ffmpeg-mac.sh in BridgeClip.
+is available from ffmpeg -version and scripts/build-ffmpeg-mac.sh in Reelferry.
 EOF
 
 configuration="$("$output_dir/ffmpeg" -version | sed -n '3p')"
@@ -70,7 +70,7 @@ done
   echo "Missing PNG decoder for title-card overlays" >&2; exit 1;
 }
 
-smoke_ass="$(mktemp -t bridgeclip-captions).ass"
+smoke_ass="$(mktemp -t reelferry-captions).ass"
 trap 'rm -rf "$work_dir"; rm -f "$smoke_ass"' EXIT
 cat > "$smoke_ass" <<'ASS'
 [Script Info]

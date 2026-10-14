@@ -1,11 +1,12 @@
-// Export the imagegen master at native icon sizes. The artwork lives in
-// resources/bridgeclip-icon.png; resizing never redraws or replaces the design.
+// Export the raster master at native icon sizes. The artwork lives in
+// resources/reelferry-icon.svg, rendered to resources/reelferry-icon.png;
+// resizing never redraws or replaces the design.
 // Run with Node via build-icons.sh (macOS sips is required).
 const fs = require('node:fs')
 const path = require('node:path')
 const { execFileSync } = require('node:child_process')
 
-const source = path.resolve(__dirname, '../../resources/bridgeclip-icon.png')
+const source = path.resolve(__dirname, '../../resources/reelferry-icon.png')
 const outDir = process.argv[2]
 if (!outDir) throw new Error('Usage: node scripts/icon/render.js <output-directory>')
 
@@ -25,11 +26,4 @@ for (const size of [16, 24, 32, 48, 64, 128, 256, 512, 1024]) {
   execFileSync('sips', ['-z', String(size), String(size), source, '--out', path.join(outDir, `icon-${size}.png`)], { stdio: 'ignore' })
 }
 
-// Self-contained raster-backed SVGs preserve the existing public asset URLs.
-// They are generated exports, not editable vector masters.
-for (const [name, size] of [['full', 1024], ['compact', 128]]) {
-  const png = fs.readFileSync(path.join(outDir, `icon-${size}.png`)).toString('base64')
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" role="img" aria-label="BridgeClip">\n  <title>BridgeClip</title>\n  <image width="${size}" height="${size}" href="data:image/png;base64,${png}"/>\n</svg>\n`
-  fs.writeFileSync(path.join(outDir, `${name}.svg`), svg)
-}
-console.log(`Exported app icon from ${width} × ${height} imagegen master`)
+console.log(`Exported app icon from ${width} × ${height} master`)

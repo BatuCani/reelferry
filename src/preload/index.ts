@@ -53,7 +53,7 @@ export interface ToolStatus {
   bridgePath: string
 }
 
-export interface BridgeClipAPI {
+export interface ReelferryAPI {
   models: { list: (refresh?: boolean) => Promise<OpenRouterCatalog> }
   automations: {
     list: () => Promise<Automation[]>
@@ -157,7 +157,7 @@ export interface BridgeClipAPI {
     onShow: (cb: () => void) => () => void
     /** Check now; resolves with the state once the check finishes. */
     check: () => Promise<UpdateState>
-    /** Quit and install the downloaded update, then reopen BridgeClip. */
+    /** Quit and install the downloaded update, then reopen Reelferry. */
     install: () => Promise<boolean>
     /** macOS: move the app out of the disk image or Downloads so it can update. */
     moveToApplications: () => Promise<boolean>
@@ -172,7 +172,7 @@ function subscribe<T>(channel: string, callback: (data: T) => void): () => void 
   return () => ipcRenderer.removeListener(channel, handler)
 }
 
-const api: BridgeClipAPI = {
+const api: ReelferryAPI = {
   models: { list: (refresh = false) => ipcRenderer.invoke('models:list', refresh) },
   automations: {
     list: () => ipcRenderer.invoke('automations:list'),
@@ -263,4 +263,4 @@ const api: BridgeClipAPI = {
   }
 }
 
-contextBridge.exposeInMainWorld('bridgeclip', api)
+contextBridge.exposeInMainWorld('reelferry', api)

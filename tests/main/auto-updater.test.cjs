@@ -59,14 +59,14 @@ function loadProvider({ latest, responses, parse = parseFeed }) {
   return { provider, requests }
 }
 
-const LISTING = 'https://api.github.com/repos/bridge-mind/bridgeclip/releases?per_page=30'
+const LISTING = 'https://api.github.com/repos/BatuCani/reelferry/releases?per_page=30'
 const missingFeed = () => { throw Object.assign(new Error('Cannot find latest-mac.yml'), { code: 'ERR_UPDATER_CHANNEL_FILE_NOT_FOUND' }) }
 const release = (tag, assets, extra = {}) => ({ tag_name: tag, draft: false, prerelease: false, assets: assets.map((name) => ({ name })), ...extra })
 
-test('the provider always reads BridgeClip releases and uses the latest release when it has this platform', async () => {
+test('the provider always reads Reelferry releases and uses the latest release when it has this platform', async () => {
   const { provider, requests } = loadProvider({ latest: () => ({ tag: 'v0.2.0', version: '0.2.0' }), responses: {} })
   const instance = new provider.PlatformGitHubProvider({ provider: 'custom' }, {}, {})
-  assert.deepEqual({ ...instance.options }, { provider: 'github', owner: 'bridge-mind', repo: 'bridgeclip' })
+  assert.deepEqual({ ...instance.options }, { provider: 'github', owner: 'BatuCani', repo: 'reelferry' })
   assert.deepEqual({ ...(await instance.getLatestVersion()) }, { tag: 'v0.2.0', version: '0.2.0' })
   assert.deepEqual(requests, [])
 })
@@ -76,21 +76,21 @@ test('a latest release without this platform falls back to the newest release th
     latest: missingFeed,
     responses: {
       [LISTING]: JSON.stringify([
-        release('v0.3.0', ['latest.yml', 'BridgeClip-0.3.0-win-x64.exe']),
+        release('v0.3.0', ['latest.yml', 'Reelferry-0.3.0-win-x64.exe']),
         release('v0.2.9', ['latest-mac.yml'], { draft: true }),
         release('v0.2.8', ['latest-mac.yml'], { prerelease: true }),
         release('nightly', ['latest-mac.yml']),
-        release('v0.2.1', ['latest-mac.yml', 'BridgeClip-0.2.1-mac-arm64.zip']),
+        release('v0.2.1', ['latest-mac.yml', 'Reelferry-0.2.1-mac-arm64.zip']),
         release('v0.2.0', ['latest-mac.yml'])
       ]),
-      'https://github.com/bridge-mind/bridgeclip/releases/download/v0.2.1/latest-mac.yml': 'version: 0.2.1\n'
+      'https://github.com/BatuCani/reelferry/releases/download/v0.2.1/latest-mac.yml': 'version: 0.2.1\n'
     }
   })
   const instance = new provider.PlatformGitHubProvider({}, {}, {})
   const result = await instance.getLatestVersion()
   assert.equal(result.tag, 'v0.2.1')
   assert.equal(result.version, '0.2.1')
-  assert.equal(result.from, 'https://github.com/bridge-mind/bridgeclip/releases/download/v0.2.1/latest-mac.yml')
+  assert.equal(result.from, 'https://github.com/BatuCani/reelferry/releases/download/v0.2.1/latest-mac.yml')
   assert.deepEqual(requests, [LISTING, result.from])
 })
 
@@ -100,7 +100,7 @@ test('the fallback takes the highest version, not the first listed', async () =>
     responses: {
       // GitHub lists by creation date: a patch for an older line can come first.
       [LISTING]: JSON.stringify([release('v0.2.10', ['latest-mac.yml']), release('v0.3.0', ['latest.yml']), release('v0.2.9', ['latest-mac.yml']), release('v0.11.0', ['latest-mac.yml'])]),
-      'https://github.com/bridge-mind/bridgeclip/releases/download/v0.11.0/latest-mac.yml': 'version: 0.11.0\n'
+      'https://github.com/BatuCani/reelferry/releases/download/v0.11.0/latest-mac.yml': 'version: 0.11.0\n'
     }
   })
   assert.equal((await new provider.PlatformGitHubProvider({}, {}, {}).getLatestVersion()).tag, 'v0.11.0')
@@ -108,7 +108,7 @@ test('the fallback takes the highest version, not the first listed', async () =>
 
 test('a fallback feed must describe its own release, and cannot replace its tag', async () => {
   const listing = { [LISTING]: JSON.stringify([release('v0.2.1', ['latest-mac.yml'])]) }
-  const feedUrl = 'https://github.com/bridge-mind/bridgeclip/releases/download/v0.2.1/latest-mac.yml'
+  const feedUrl = 'https://github.com/BatuCani/reelferry/releases/download/v0.2.1/latest-mac.yml'
   const mismatched = loadProvider({ latest: missingFeed, responses: { ...listing, [feedUrl]: 'version: 9.9.9\n' } })
   await assert.rejects(new mismatched.provider.PlatformGitHubProvider({}, {}, {}).getLatestVersion(), { code: 'ERR_UPDATER_CHANNEL_FILE_NOT_FOUND' })
 
@@ -130,9 +130,9 @@ test('other update errors are not retried', async () => {
 
 // ---- auto-updater state machine ---------------------------------------------
 
-const SIGNED = 'Executable=/Applications/BridgeClip.app/Contents/MacOS/BridgeClip\nAuthority=Developer ID Application: BRIDGEMIND LLC (9CBJCDR3J2)\nTeamIdentifier=9CBJCDR3J2\n'
+const SIGNED = 'Executable=/Applications/Reelferry.app/Contents/MacOS/Reelferry\nAuthority=Developer ID Application: BRIDGEMIND LLC (9CBJCDR3J2)\nTeamIdentifier=9CBJCDR3J2\n'
 
-function setup({ platform = 'darwin', dev = false, packaged = true, env = {}, codesign = SIGNED, holdCodesign = false, exe = '/Applications/BridgeClip.app/Contents/MacOS/BridgeClip' } = {}) {
+function setup({ platform = 'darwin', dev = false, packaged = true, env = {}, codesign = SIGNED, holdCodesign = false, exe = '/Applications/Reelferry.app/Contents/MacOS/Reelferry' } = {}) {
   const handlers = {}
   let releaseCodesign = null
   const sent = []
@@ -207,11 +207,11 @@ test('official macOS builds read the platform-aware GitHub feed and download in 
 
 for (const [name, options, reason] of [
   ['running from source', { dev: true, packaged: false }, 'development'],
-  ['turned off by the environment', { env: { BRIDGECLIP_DISABLE_AUTO_UPDATE: '1' } }, 'disabled'],
+  ['turned off by the environment', { env: { REELFERRY_DISABLE_AUTO_UPDATE: '1' } }, 'disabled'],
   ['a macOS build not signed by BridgeMind', { codesign: '' }, 'unofficial'],
   ['a macOS build signed by another team', { codesign: 'Authority=Developer ID Application: Someone Else (ABCDE12345)\nTeamIdentifier=ABCDE12345\n' }, 'unofficial'],
-  ['a macOS app running from its disk image', { exe: '/Volumes/BridgeClip/BridgeClip.app/Contents/MacOS/BridgeClip' }, 'move-to-applications'],
-  ['a quarantined macOS app', { exe: '/private/var/folders/x/AppTranslocation/ABC/d/BridgeClip.app/Contents/MacOS/BridgeClip' }, 'move-to-applications']
+  ['a macOS app running from its disk image', { exe: '/Volumes/Reelferry/Reelferry.app/Contents/MacOS/Reelferry' }, 'move-to-applications'],
+  ['a quarantined macOS app', { exe: '/private/var/folders/x/AppTranslocation/ABC/d/Reelferry.app/Contents/MacOS/Reelferry' }, 'move-to-applications']
 ]) {
   test(`updates are off for ${name}`, async () => {
     const t = setup(options)
@@ -295,7 +295,7 @@ test('a check that finds an update downloads it, then it is ready to install', a
   assert.deepEqual(t.updater.installs, [[false, true]])
 
   await t.invoke('update:openReleaseNotes')
-  assert.deepEqual(t.opened, ['https://github.com/bridge-mind/bridgeclip/releases/tag/v0.1.18'])
+  assert.deepEqual(t.opened, ['https://github.com/BatuCani/reelferry/releases/tag/v0.1.18'])
 })
 
 test('an install failure after "ready" (Squirrel rejecting the signature) is reported and can be retried', async () => {

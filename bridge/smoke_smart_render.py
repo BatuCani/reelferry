@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Release smoke test for the bundled BridgeClip smart graph and FFmpeg audio."""
+"""Release smoke test for the bundled Reelferry smart graph and FFmpeg audio."""
 
 import subprocess
 import sys
@@ -27,7 +27,7 @@ def main() -> int:
         cam_face=Box(0.80, 0.72, 0.09, 0.12),
     )
     graph = build_layout_graph(ClipLayoutPlan([shot], 640, 360), 360, 640, with_audio=True)
-    with tempfile.TemporaryDirectory(prefix="bridgeclip-smart-smoke-") as work:
+    with tempfile.TemporaryDirectory(prefix="reelferry-smart-smoke-") as work:
         title = Path(work) / "title.png"
         Image.new("RGBA", (64, 32), (255, 255, 255, 255)).save(title)
         command = [

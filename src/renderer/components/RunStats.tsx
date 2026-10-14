@@ -3,7 +3,6 @@ import { CalendarClock, Clapperboard, CircleDollarSign, Info, Timer } from 'luci
 import { formatDuration, formatTimecode, formatUsd } from '../lib/utils'
 import type { ApiCosts, JobOutput } from '../store/use-job-store'
 import { comparisonDurationSeconds, formatTimes, OPUS_CLIP, opusClipCostUsd, opusClipCredits, percentLessThanOpusClip, timesFasterThanOpusClip } from '../config/opus-clip'
-import { OpusClipLogo } from './brand/OpusClipLogo'
 import { HoverCard } from './ui/HoverCard'
 import { IconTile } from './ui/IconTile'
 
@@ -196,12 +195,12 @@ function StatCell({ index, icon, label, hint, value, final, sub }: {
   )
 }
 
-/** OpusClip's logo, the one number that matters, and one line on where it comes from. */
+/** OpusClip's name, the one number that matters, and one line on where it comes from. */
 function OpusClipCard({ headline, comparison, basis }: { headline: string; comparison: string; basis: string }): React.JSX.Element {
   return (
     <div className="w-[260px] max-w-[calc(100vw-16px)]">
       <div className="px-4 pb-3.5 pt-4">
-        <OpusClipLogo className="h-[18px] text-ink" />
+        <p className="text-sm font-semibold leading-[18px] tracking-[-0.01em] text-ink">OpusClip</p>
         <p className="mt-3 text-3xl font-semibold leading-none tracking-[-0.03em] text-success">{headline}</p>
         <p className="mt-1.5 text-sm text-ink-muted">{comparison}</p>
       </div>

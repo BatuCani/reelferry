@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Exercise BridgeClip audio extraction with the exact FFmpeg shipped to users."""
+"""Exercise Reelferry audio extraction with the exact FFmpeg shipped to users."""
 
 import asyncio
 import os
@@ -24,7 +24,7 @@ def main() -> int:
         return 2
     os.environ["PATH"] = f"{binary_dir}{os.pathsep}{os.environ.get('PATH', '')}"
 
-    with tempfile.TemporaryDirectory(prefix="bridgeclip-transcription-") as work:
+    with tempfile.TemporaryDirectory(prefix="reelferry-transcription-") as work:
         source = Path(work) / "source.mp4"
         extracted = Path(work) / "audio_extracted.wav"
         generated = subprocess.run(

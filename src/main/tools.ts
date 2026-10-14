@@ -26,7 +26,7 @@ export function resolveBinary(name: 'ffmpeg' | 'ffprobe' | 'yt-dlp'): string {
   return name
 }
 
-/** Captioned BridgeClip renders require FFmpeg's libass-backed `ass` filter. */
+/** Captioned Reelferry renders require FFmpeg's libass-backed `ass` filter. */
 export async function supportsCaptionFilter(): Promise<boolean> {
   try {
     const { stdout } = await execFileAsync(resolveBinary('ffmpeg'), ['-hide_banner', '-filters'], {

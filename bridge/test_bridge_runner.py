@@ -28,7 +28,7 @@ class BridgeTests(unittest.TestCase):
             env = {
                 **os.environ,
                 "PYTHONPATH": os.path.join(repo_root, "engine"),
-                "BRIDGECLIP_WORK_ROOT": work_root,
+                "REELFERRY_WORK_ROOT": work_root,
                 "OPENROUTER_API_KEY": "",
                 "PYTHONDONTWRITEBYTECODE": "1",
             }
@@ -79,7 +79,7 @@ class BridgeTests(unittest.TestCase):
             with self.subTest(speed=speed), self.assertRaises(ValueError):
                 bridge.validate_config(self.config(video_speed=speed))
 
-    def test_rejects_invalid_config_without_importing_bridgeclip(self):
+    def test_rejects_invalid_config_without_importing_reelferry(self):
         for value in ([], None, "config", self.config(contract_version=None), self.config(contract_version=1), self.config(layout_vision_enabled=None), self.config(job_id="../escape"), self.config(video_url="file:///etc/passwd"), self.config(max_clips=True), self.config(aspect_ratio="1:1"), self.config(layout_style="unknown"), self.config(pacing="unknown"), self.config(clipping_mode="unknown"), self.config(duration_ranges=["unknown"])):
             with self.subTest(value=value), self.assertRaises(ValueError):
                 bridge.validate_config(value)
@@ -208,7 +208,7 @@ class BridgeTests(unittest.TestCase):
         self.assertNotIn("secret-pass", json.dumps(fallback))
         self.assertEqual(bridge.describe_failure(None)["message"], "The clipping pipeline failed.")
         empty = bridge.describe_failure("No clip-worthy moments found (the video may have no speech, or the selected time range is too short for the chosen clip length)")
-        self.assertEqual(empty["message"], "BridgeClip couldn't find any clips in this video.")
+        self.assertEqual(empty["message"], "Reelferry couldn't find any clips in this video.")
         self.assertEqual(bridge.describe_failure("Transcription authentication failed")["message"], "OpenRouter rejected the transcription request.")
         self.assertEqual(bridge.describe_failure("Transcription account credit limit reached")["message"], "OpenRouter could not transcribe the video because the account has insufficient credit or a spending limit.")
         self.assertEqual(bridge.describe_failure("Transcription providers are temporarily rate limited")["message"], "Transcription providers are busy after automatic recovery attempts.")

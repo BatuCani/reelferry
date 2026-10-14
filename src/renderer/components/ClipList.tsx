@@ -49,7 +49,7 @@ export function ClipList({ output, outputDir: runDirectory, leading, onNewClip, 
   const exportingRef = useRef(false)
   const [exportError, setExportError] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
-  // Older BridgeClip engine runs do not record output format; use the first thumbnail for those.
+  // Older Reelferry engine runs do not record output format; use the first thumbnail for those.
   const [aspect, setAspect] = useState<number | null>(null)
   const settings = output.metrics?.requested_settings
   const requestedAspect = settings && typeof settings === 'object' && !Array.isArray(settings)

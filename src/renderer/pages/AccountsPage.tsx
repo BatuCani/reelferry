@@ -50,7 +50,7 @@ function ZernioSetup(): React.JSX.Element {
           <div className="min-w-0 flex-1">
             <h2 className="text-sm font-semibold text-ink">Connect with Zernio</h2>
             <p className="mt-0.5 text-xs text-ink-muted">
-              Post and schedule clips to {ZERNIO_PLATFORMS.length} platforms. BridgeClip only holds your Zernio key; platform sign-in happens in your browser.
+              Post and schedule clips to {ZERNIO_PLATFORMS.length} platforms. Reelferry only holds your Zernio key; platform sign-in happens in your browser.
             </p>
           </div>
           <div aria-hidden className="hidden shrink-0 -space-x-1 sm:flex">
@@ -78,7 +78,7 @@ function ZernioSetup(): React.JSX.Element {
               </Button>
             }
           >
-            <StepText title="Create an API key" hint="Full access with Read & Write permission, so BridgeClip can create and connect profiles. Copy it right away: Zernio only shows it once." />
+            <StepText title="Create an API key" hint="Full access with Read & Write permission, so Reelferry can create and connect profiles. Copy it right away: Zernio only shows it once." />
           </SetupStep>
           <SetupStep step={3}>
             <ApiKeyInput
@@ -587,7 +587,7 @@ interface AccountTileProps {
   connecting: boolean
   busy: boolean
   disconnecting: boolean
-  /** Absent for platforms BridgeClip can't connect (accounts added in Zernio itself). */
+  /** Absent for platforms Reelferry can't connect (accounts added in Zernio itself). */
   onConnect?: () => void
   /** Asks Zernio for a fresh sign-in on the connected account. */
   onReconnect?: () => void

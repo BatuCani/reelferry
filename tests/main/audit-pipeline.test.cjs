@@ -25,7 +25,7 @@ function loadShared(file) {
   return module.exports
 }
 
-const WORK_HOME = fs.mkdtempSync(path.join(os.tmpdir(), 'bridgeclip-audit-pipeline-'))
+const WORK_HOME = fs.mkdtempSync(path.join(os.tmpdir(), 'reelferry-audit-pipeline-'))
 process.on('exit', () => fs.rmSync(WORK_HOME, { recursive: true, force: true }))
 const jobOutput = loadShared('job-output.ts')
 const jobContract = loadShared('job-contract.ts')
@@ -74,7 +74,7 @@ test('the worker gets a minimal environment: no proxies, interpreter hooks or in
     PYTHONSTARTUP: '/tmp/hook.py', PYTHONHOME: '/tmp/py', PYTHONPATH: '/tmp/site', PYTHONWARNINGS: 'x', PYTHONINSPECT: '1',
     DYLD_INSERT_LIBRARIES: '/tmp/evil.dylib', DYLD_LIBRARY_PATH: '/tmp', LD_PRELOAD: '/tmp/evil.so', LD_LIBRARY_PATH: '/tmp',
     NODE_OPTIONS: '--require /tmp/evil.js', REQUESTS_CA_BUNDLE: '/tmp/ca.pem', CURL_CA_BUNDLE: '/tmp/ca.pem',
-    OPENROUTER_API_KEY: 'stale-process-key', AWS_SECRET_ACCESS_KEY: 'aws', BRIDGECLIP_API_KEY: 'server', YTDLP_PROXIES: 'socks5h://u:p@10.0.0.1:1'
+    OPENROUTER_API_KEY: 'stale-process-key', AWS_SECRET_ACCESS_KEY: 'aws', REELFERRY_API_KEY: 'server', YTDLP_PROXIES: 'socks5h://u:p@10.0.0.1:1'
   }
   let spawned
   const { runner, window } = startRunner({ child, env: hostile, onSpawn: (command, args, options) => { spawned = { command, args, options } } })
@@ -96,7 +96,7 @@ test('the worker gets a minimal environment: no proxies, interpreter hooks or in
   assert.equal(env.PYTHONPATH, runner.getEnginePath())
   assert.equal(env.PATH.split(path.delimiter)[0], '/staged/engine-bin')
   assert.equal(env.PYTHONDONTWRITEBYTECODE, '1')
-  assert.ok(env.BRIDGECLIP_WORK_ROOT.startsWith(WORK_HOME))
+  assert.ok(env.REELFERRY_WORK_ROOT.startsWith(WORK_HOME))
   child.emit('close', 1, null)
 })
 

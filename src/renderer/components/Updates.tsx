@@ -22,7 +22,7 @@ function useRestartToUpdate(): { restart: () => void; dialog: React.JSX.Element 
     if (activeJobs === 0) return install()
     setRequest({
       title: 'Restart to update?',
-      body: `${activeJobs === 1 ? 'A clipping job is' : `${activeJobs} clipping jobs are`} still running. Restarting stops ${activeJobs === 1 ? 'it' : 'them'}; the update also installs the next time you quit BridgeClip.`,
+      body: `${activeJobs === 1 ? 'A clipping job is' : `${activeJobs} clipping jobs are`} still running. Restarting stops ${activeJobs === 1 ? 'it' : 'them'}; the update also installs the next time you quit Reelferry.`,
       confirmLabel: 'Restart anyway',
       tone: 'danger',
       onConfirm: install
@@ -36,7 +36,7 @@ export function SidebarUpdateButton({ expanded }: { expanded: boolean }): React.
   const update = useUpdateStore((s) => s.update)
   const { restart, dialog } = useRestartToUpdate()
   if (update?.status !== 'ready') return null
-  const label = `BridgeClip ${update.version} is ready. Restart to update`
+  const label = `Reelferry ${update.version} is ready. Restart to update`
   return (
     <>
       <button
@@ -62,12 +62,12 @@ function describe(update: UpdateState): string {
     case 'off':
       return {
         development: 'Updates are off when running from source. Pull the latest code to update.',
-        unofficial: 'Updates are off for builds not signed by BridgeMind. Download the official app from bridgeclip.ai to get updates.',
-        'move-to-applications': 'Move BridgeClip to your Applications folder to get updates.',
-        disabled: 'Updates are turned off (BRIDGECLIP_DISABLE_AUTO_UPDATE).'
+        unofficial: 'Updates are off for builds not signed by BridgeMind. Download the official app from reelferry.ai to get updates.',
+        'move-to-applications': 'Move Reelferry to your Applications folder to get updates.',
+        disabled: 'Updates are turned off (REELFERRY_DISABLE_AUTO_UPDATE).'
       }[update.reason]
     case 'idle':
-      return `BridgeClip checks for updates automatically.${checked}`
+      return `Reelferry checks for updates automatically.${checked}`
     case 'checking':
       return 'Checking for updates…'
     case 'up-to-date':

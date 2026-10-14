@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" role="img" aria-label="Reelferry">
+  <title>Reelferry</title>
+  <!-- Neutral placeholder app icon: a play symbol in a ring on a dark tile. Fills only, so every SVG renderer draws it alike. -->
+  <rect x="96" y="96" width="832" height="832" rx="188" fill="#2C2F3A"/>
+  <rect x="104" y="104" width="816" height="816" rx="180" fill="#16181F"/>
+  <path fill="#F7F8FC" fill-rule="evenodd" d="M512 254a258 258 0 1 0 0 516a258 258 0 1 0 0-516zM512 300a212 212 0 1 1 0 424a212 212 0 1 1 0-424z"/>
+  <path fill="#F7F8FC" d="M470 414c0-14 15-23 27-16l136 98c11 8 11 24 0 32l-136 98c-12 7-27-2-27-16z"/>
+</svg>

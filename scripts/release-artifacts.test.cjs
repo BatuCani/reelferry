@@ -33,19 +33,19 @@ test('Linux artifact names stay consistent across Builder architecture aliases',
     packager[method] = PlatformPackager.prototype[method]
   }
   for (const extension of ['AppImage', 'deb']) {
-    assert.equal(packager.expandArtifactNamePattern({}, extension, Arch.x64), `BridgeClip-1.2.3-linux-x64.${extension}`)
+    assert.equal(packager.expandArtifactNamePattern({}, extension, Arch.x64), `Reelferry-1.2.3-linux-x64.${extension}`)
   }
 })
 
 function fixture(t) {
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'bridgeclip-artifacts-'))
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'reelferry-artifacts-'))
   t.after(() => fs.rmSync(root, { recursive: true, force: true }))
   for (const [target, contract] of Object.entries(targets)) {
     const directory = path.join(root, target)
     fs.mkdirSync(directory)
     const platform = target.startsWith('mac') ? 'mac' : target.startsWith('windows') ? 'win' : 'linux'
     const files = contract.extensions.map(extension => {
-      const name = `BridgeClip-1.2.3-${platform}-${target.split('-').at(-1)}.${extension}`
+      const name = `Reelferry-1.2.3-${platform}-${target.split('-').at(-1)}.${extension}`
       const data = Buffer.from(`fixture ${name}`)
       fs.writeFileSync(path.join(directory, name), data)
       return { url: name, size: data.length, sha512: crypto.createHash('sha512').update(data).digest('base64') }
@@ -72,8 +72,8 @@ test('a Mac-only release includes both architectures and no other update feed', 
   const manifest = JSON.parse(fs.readFileSync(path.join(output, 'release-manifest.json')))
   assert.equal(manifest.platform, 'macos')
   assert.deepEqual(manifest.files.filter(file => /\.(dmg|zip|exe|AppImage|deb)$/.test(file.name)).map(file => file.name).sort(), [
-    'BridgeClip-1.2.3-mac-arm64.dmg', 'BridgeClip-1.2.3-mac-arm64.zip',
-    'BridgeClip-1.2.3-mac-x64.dmg', 'BridgeClip-1.2.3-mac-x64.zip'
+    'Reelferry-1.2.3-mac-arm64.dmg', 'Reelferry-1.2.3-mac-arm64.zip',
+    'Reelferry-1.2.3-mac-x64.dmg', 'Reelferry-1.2.3-mac-x64.zip'
   ])
   assert.equal(yaml.load(fs.readFileSync(path.join(output, 'latest-mac.yml'), 'utf8')).files.length, 4)
   assert.equal(fs.existsSync(path.join(output, 'latest.yml')), false)
@@ -92,7 +92,7 @@ test('missing platforms cannot produce a partial public release', async t => {
 })
 test('changed installer bytes and mismatched versions are rejected', async t => {
   const root = fixture(t)
-  fs.appendFileSync(path.join(root, 'windows-x64/BridgeClip-1.2.3-win-x64.exe'), 'changed')
+  fs.appendFileSync(path.join(root, 'windows-x64/Reelferry-1.2.3-win-x64.exe'), 'changed')
   await assert.rejects(collect(root, path.join(root, 'publish'), '1.2.3', 'a'.repeat(40)), /size mismatch/)
   await assert.rejects(collect(root, path.join(root, 'other'), '1.2.4', 'a'.repeat(40)), /Wrong .* version/)
 })
@@ -100,7 +100,7 @@ test('changed installer bytes and mismatched versions are rejected', async t => 
 test('one native package cannot introduce updater entries for another architecture', async t => {
   const root = fixture(t), filename = path.join(root, 'mac-arm64/latest-mac.yml')
   const metadata = yaml.load(fs.readFileSync(filename, 'utf8'))
-  metadata.files.push({ url: 'BridgeClip-1.2.3-mac-x64.zip', size: 1, sha512: 'fixture' })
+  metadata.files.push({ url: 'Reelferry-1.2.3-mac-x64.zip', size: 1, sha512: 'fixture' })
   fs.writeFileSync(filename, yaml.dump(metadata))
   await assert.rejects(collect(root, path.join(root, 'publish'), '1.2.3', 'a'.repeat(40)), /Unexpected mac-arm64 updater entry/)
 })
@@ -108,9 +108,9 @@ test('one native package cannot introduce updater entries for another architectu
 test('notarization metadata uses final ZIP bytes and removes stale DMG blockmaps', t => {
   const root = fixture(t), directory = path.join(root, 'mac-arm64')
   const filename = path.join(directory, 'latest-mac.yml')
-  const blockmap = path.join(directory, 'BridgeClip-1.2.3-mac-arm64.dmg.blockmap')
+  const blockmap = path.join(directory, 'Reelferry-1.2.3-mac-arm64.dmg.blockmap')
   fs.writeFileSync(blockmap, 'old map')
-  fs.appendFileSync(path.join(directory, 'BridgeClip-1.2.3-mac-arm64.dmg'), 'notarization ticket')
+  fs.appendFileSync(path.join(directory, 'Reelferry-1.2.3-mac-arm64.dmg'), 'notarization ticket')
   execFileSync(process.execPath, [path.join(__dirname, 'release/refresh-metadata.cjs'), filename])
   const metadata = yaml.load(fs.readFileSync(filename, 'utf8'))
   assert.equal(metadata.files.length, 1)

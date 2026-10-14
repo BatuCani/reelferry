@@ -36,7 +36,7 @@ import {
 type GetWindow = () => BrowserWindow | null
 
 /** Development-only environment hooks for end-to-end tests; always off in packaged builds. */
-function devHook(name: 'BRIDGECLIP_ZERNIO_API_URL' | 'BRIDGECLIP_E2E_BROWSER_URL' | 'BRIDGECLIP_E2E'): string | undefined {
+function devHook(name: 'REELFERRY_ZERNIO_API_URL' | 'REELFERRY_E2E_BROWSER_URL' | 'REELFERRY_E2E'): string | undefined {
   return app.isPackaged ? undefined : process.env[name] || undefined
 }
 
@@ -44,7 +44,7 @@ export function getClient(): ZernioClient {
   const { zernioApiKey } = loadSettings()
   if (!zernioApiKey) throw new ZernioApiError('Add your Zernio API key to connect social accounts.', 401, 'missing_key')
   // Development-only hook for end-to-end tests against a local mock Zernio.
-  return new ZernioClient(zernioApiKey, devHook('BRIDGECLIP_ZERNIO_API_URL'))
+  return new ZernioClient(zernioApiKey, devHook('REELFERRY_ZERNIO_API_URL'))
 }
 
 /** Renderer-safe description of any failure from this module. */
@@ -248,7 +248,7 @@ function send(getWindow: GetWindow, channel: string, payload: unknown): BrowserW
 
 function bringToFront(window: BrowserWindow): void {
   // Scripted test runs keep their window hidden and never take focus.
-  if (devHook('BRIDGECLIP_E2E') === '1') return
+  if (devHook('REELFERRY_E2E') === '1') return
   if (window.isMinimized()) window.restore()
   window.show()
   // The user is coming back from their browser; macOS won't raise the app without this.
@@ -260,7 +260,7 @@ function bringToFront(window: BrowserWindow): void {
 async function openInBrowser(url: string): Promise<void> {
   // Development-only: a scripted "browser" follows the link in e2e runs, so
   // tests never open the developer's real browser.
-  const scriptedBrowser = devHook('BRIDGECLIP_E2E_BROWSER_URL')
+  const scriptedBrowser = devHook('REELFERRY_E2E_BROWSER_URL')
   if (scriptedBrowser && /^http:\/\/127\.0\.0\.1:\d+\//.test(scriptedBrowser)) {
     const response = await fetch(scriptedBrowser, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ url }) })
     if (!response.ok) throw new Error('The test browser refused the sign-in link.')
@@ -278,7 +278,7 @@ function parseConnectOptions(value: unknown): { reconnect: boolean; newProfileNa
   return { reconnect: reconnect === true, newProfileName: typeof newProfileName === 'string' ? newProfileName.trim() : null }
 }
 
-/** The workspace's default profile, or one created for BridgeClip when it has none. */
+/** The workspace's default profile, or one created for Reelferry when it has none. */
 async function ensureProfile(client: ZernioClient): Promise<string> {
   // Every Zernio workspace starts with a "Default" profile, but it can be deleted.
   const profiles = await client.listProfiles()
@@ -288,7 +288,7 @@ async function ensureProfile(client: ZernioClient): Promise<string> {
     return (await client.createProfile(APP_NAME)).id
   } catch (error) {
     if (error instanceof ZernioApiError && error.status === 403 && !error.code) {
-      throw new ZernioApiError("Your Zernio plan's profile limit is reached, so BridgeClip couldn't create a profile. Free one up in Zernio and try again.", 403, 'profile_limit')
+      throw new ZernioApiError("Your Zernio plan's profile limit is reached, so Reelferry couldn't create a profile. Free one up in Zernio and try again.", 403, 'profile_limit')
     }
     throw error
   }
@@ -452,7 +452,7 @@ export async function connectZernioAccount(
           platform,
           success: false,
           ended: 'timeout',
-          error: 'BridgeClip stopped waiting for the browser after 10 minutes. If you finished signing in, refresh; otherwise connect again.'
+          error: 'Reelferry stopped waiting for the browser after 10 minutes. If you finished signing in, refresh; otherwise connect again.'
         } satisfies ZernioConnectResult)
       }
     })
@@ -469,14 +469,14 @@ export async function connectZernioAccount(
     if (!isTrustedConnectUrl(start.authUrl, platform)) {
       const host = connectUrlHost(start.authUrl)
       logger.warn('zernio.connect.untrustedLink', { platform, host })
-      throw new ZernioApiError(`Zernio sent a sign-in link to an unexpected site (${host}), so BridgeClip didn't open it. Please report this issue.`, 502, 'untrusted_link')
+      throw new ZernioApiError(`Zernio sent a sign-in link to an unexpected site (${host}), so Reelferry didn't open it. Please report this issue.`, 502, 'untrusted_link')
     }
 
     pending = connect
     pendingCleanup = cleanupCreatedProfile
     stage = 'open_browser'
     await openInBrowser(start.authUrl).catch(() => {
-      throw new Error("BridgeClip couldn't open your web browser. Check that a default browser is set, then try again.")
+      throw new Error("Reelferry couldn't open your web browser. Check that a default browser is set, then try again.")
     })
     if (!isCurrent()) throw new Error('This sign-in was cancelled.')
     logger.info('zernio.connect.start', { platform, reconnect })
@@ -492,7 +492,7 @@ export async function connectZernioAccount(
     const retainedProfile = wasCurrent && workspaceGeneration === generation && createdProfile && !profileRemoved ? createdProfile : null
     if (retainedProfile) {
       updateCache((overview) => ({ ...overview, profiles: [...overview.profiles.filter((profile) => profile.id !== retainedProfile.id), retainedProfile] }))
-      info.message = `The profile was created, but connecting ${ZERNIO_PLATFORM_NAMES[platform]} failed. ${info.message} BridgeClip could not remove the new profile; check it in Zernio before creating another.`
+      info.message = `The profile was created, but connecting ${ZERNIO_PLATFORM_NAMES[platform]} failed. ${info.message} Reelferry could not remove the new profile; check it in Zernio before creating another.`
     }
     logger.warn('zernio.connect.failed', { traceId: client?.traceId ?? null, platform, stage, profileCreated: Boolean(createdProfile), profileRemoved, kind: info.kind, status: error instanceof ZernioApiError ? error.status : null })
     return { status: 'failed', platform, profileId: targetProfileId, error: info, ...(retainedProfile ? { createdProfile: retainedProfile } : {}) }

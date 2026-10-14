@@ -46,7 +46,7 @@ def stage():
     venv, binaries = ROOT / "engine-venv", ROOT / "engine-bin"
     if venv.exists() or binaries.exists():
         raise RuntimeError("Runtime directories already exist; use a clean checkout")
-    with tempfile.TemporaryDirectory(prefix="bridgeclip-runtime-") as scratch:
+    with tempfile.TemporaryDirectory(prefix="reelferry-runtime-") as scratch:
         work = Path(scratch)
         py = lock["python"]
         filename = f'cpython-{py["version"]}+{py["tag"]}-{py[target]["target"]}-install_only_stripped.tar.gz'
@@ -61,10 +61,10 @@ def stage():
         archive = work / ff[target]["file"]
         # A maintainer may mirror the exact upstream archives for long-term
         # retention. The committed digest remains mandatory for mirrors.
-        base = os.environ.get("BRIDGECLIP_FFMPEG_MIRROR") or f'https://github.com/BtbN/FFmpeg-Builds/releases/download/{ff["tag"]}'
+        base = os.environ.get("REELFERRY_FFMPEG_MIRROR") or f'https://github.com/BtbN/FFmpeg-Builds/releases/download/{ff["tag"]}'
         if not base.startswith("https://"):
             raise RuntimeError("Archive mirror must use HTTPS")
-        cached = os.environ.get("BRIDGECLIP_FFMPEG_ARCHIVE")
+        cached = os.environ.get("REELFERRY_FFMPEG_ARCHIVE")
         if cached:
             shutil.copy2(cached, archive)
             with archive.open("rb") as content:

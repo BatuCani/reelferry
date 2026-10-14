@@ -174,7 +174,7 @@ class TranscriptionTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as work, patch.dict(sys.modules, {"httpx": httpx}):
             audio = Path(work) / "audio.wav"
             audio.write_bytes(b"test audio")
-            asyncio.run(self.service._request_transcript(str(audio), "en", ["BridgeClip", "BridgeClip"]))
+            asyncio.run(self.service._request_transcript(str(audio), "en", ["Reelferry", "Reelferry"]))
             args, request = calls[-1]
             self.assertEqual(args, ("POST", "https://openrouter.ai/api/v1/audio/transcriptions"))
             self.assertEqual(request["headers"]["Authorization"], "Bearer test-openrouter")
@@ -185,14 +185,14 @@ class TranscriptionTests(unittest.TestCase):
             self.assertEqual(payload["input_audio"]["format"], "wav")
             self.assertEqual(payload["timestamp_granularities"], ["segment", "word"])
             self.assertEqual(payload["provider"]["options"]["azure"], {
-                "diarization": {"enabled": True}, "phraseList": {"phrases": ["BridgeClip"]},
+                "diarization": {"enabled": True}, "phraseList": {"phrases": ["Reelferry"]},
             })
             self.service.settings.transcription_model = stt.BUDGET_TRANSCRIPTION_MODEL
-            asyncio.run(self.service._request_transcript(str(audio), "en", ["BridgeClip"]))
+            asyncio.run(self.service._request_transcript(str(audio), "en", ["Reelferry"]))
             budget_payload = calls[-1][1]["json"]
             self.assertEqual(budget_payload["model"], stt.BUDGET_TRANSCRIPTION_MODEL)
             self.assertNotIn("azure", budget_payload.get("provider", {}).get("options", {}))
-            self.assertEqual(budget_payload["provider"]["options"]["groq"]["prompt"], "Expected vocabulary: BridgeClip")
+            self.assertEqual(budget_payload["provider"]["options"]["groq"]["prompt"], "Expected vocabulary: Reelferry")
             self.assertEqual(self.service._parse_openrouter_response({"text": ""}, 3600).api_costs.model, stt.BUDGET_TRANSCRIPTION_MODEL)
             for status, reason in [(400, "bad_request"), (401, "auth"), (403, "auth"), (402, "quota"), (429, "rate_limit"), (503, "network"), (307, "rejected")]:
                 response.status_code = status

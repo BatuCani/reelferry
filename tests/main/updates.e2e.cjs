@@ -6,14 +6,14 @@ const path = require('node:path')
 const { buildApp, launchApp } = require('../zernio/support/electron-app.cjs')
 
 test('Update state appears in Settings and the sidebar, and restart installs it', { timeout: 90000 }, async (t) => {
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'bridgeclip-updates-e2e-'))
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'reelferry-updates-e2e-'))
   const appDir = buildApp(path.join(root, 'app'))
   const session = await launchApp({ appDir, userDataDir: path.join(root, 'user-data') })
   t.after(async () => { await session.close(); fs.rmSync(root, { recursive: true, force: true }) })
   const { app, page } = session
   const errors = []
   page.on('pageerror', (error) => errors.push(error.message))
-  const shots = process.env.BRIDGECLIP_E2E_SHOTS
+  const shots = process.env.REELFERRY_E2E_SHOTS
   const shot = async (name) => {
     if (!shots) return
     fs.mkdirSync(shots, { recursive: true })
@@ -46,7 +46,7 @@ test('Update state appears in Settings and the sidebar, and restart installs it'
 
   await report({ status: 'ready', version: '0.1.18' })
   await page.getByText('Version 0.1.18 is ready.', { exact: false }).waitFor()
-  const sidebar = page.getByRole('button', { name: 'BridgeClip 0.1.18 is ready. Restart to update' })
+  const sidebar = page.getByRole('button', { name: 'Reelferry 0.1.18 is ready. Restart to update' })
   await sidebar.waitFor()
   if (shots) {
     await page.locator('#settings-about').scrollIntoViewIfNeeded()

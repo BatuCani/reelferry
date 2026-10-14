@@ -25,7 +25,7 @@ const CONFIRM_MS = 120_000
 /** Presigned upload URLs expire after an hour. */
 const MAX_MS = 55 * 60_000
 
-/** Container types Zernio's presign accepts for the clip formats BridgeClip writes. */
+/** Container types Zernio's presign accepts for the clip formats Reelferry writes. */
 const VIDEO_TYPES: Record<string, string> = {
   '.mp4': 'video/mp4',
   '.m4v': 'video/x-m4v',

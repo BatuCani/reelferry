@@ -22,7 +22,7 @@ function deferred() {
 
 function load(postsApi) {
   const module = { exports: {} }
-  const window = { bridgeclip: { zernio: { posts: postsApi } } }
+  const window = { reelferry: { zernio: { posts: postsApi } } }
   vm.runInNewContext(bundle, { module, exports: module.exports, require, window, Date, Promise, console })
   const store = module.exports.usePostsStore
   return () => store.getState()

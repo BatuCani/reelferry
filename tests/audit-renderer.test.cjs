@@ -38,7 +38,7 @@ const bundled = buildSync({
 const calls = []
 const record = (name) => (...args) => { calls.push([name, ...args]); return new Promise(() => {}) }
 globalThis.window = {
-  bridgeclip: {
+  reelferry: {
     settings: { load: record('settings.load'), save: record('settings.save'), replaceApiKey: record('settings.replaceApiKey') },
     shell: { openPath: record('shell.openPath'), showItemInFolder: record('shell.showItemInFolder') },
     thumbnails: { generate: record('thumbnails.generate') },
@@ -141,9 +141,9 @@ test('clip paths from run files only drop the file:// prefix and are never decod
 test('the renderer settings state never retains raw API keys, even if the main process returned them', async () => {
   const leak = { openrouterApiKey: 'sk-or-SECRET', zernioApiKey: 'sk_SECRET' }
   const settings = { openrouterConfigured: true, zernioConfigured: true, outputDirectory: '/clips', pythonPath: 'python3', customVocabulary: '', ...leak }
-  window.bridgeclip.settings.load = async () => settings
-  window.bridgeclip.settings.save = async () => settings
-  window.bridgeclip.settings.replaceApiKey = async () => settings
+  window.reelferry.settings.load = async () => settings
+  window.reelferry.settings.save = async () => settings
+  window.reelferry.settings.replaceApiKey = async () => settings
   await useSettingsStore.getState().load()
   await useSettingsStore.getState().save({ customVocabulary: 'x' })
   await useSettingsStore.getState().replaceApiKey('openrouterApiKey', 'sk-or-typed')

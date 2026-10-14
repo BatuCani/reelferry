@@ -137,7 +137,7 @@ def filter_options(args: str) -> list[tuple[str | None, str]]:
 
 @pytest.mark.parametrize("path", [
     "/tmp/plain/clip.ass",
-    "/Users/Matt O'Brien/Library/Application Support/BridgeClip/work/clip.ass",
+    "/Users/Jo O'Neill/Library/Application Support/Reelferry/work/clip.ass",
     "/out/" + HOSTILE_DIR + "/clip-0-6000.ass",
     "/out/x'\\''y/[a],b;c=d:e/clip.ass",
     "C:/Users/me/clip.ass",
@@ -243,7 +243,7 @@ def test_transcript_word_cannot_add_ass_sections_or_events(tmp_path):
     assert "HI [V4+ Styles] Format:" in text
     # Ordinary punctuation is untouched.
     service = CaptionGeneratorService()
-    assert service._display_word("Matt's", sentence_case_style()) == "Matt's"
+    assert service._display_word("Jo's", sentence_case_style()) == "Jo's"
     assert service._display_word("$14,500.", CaptionStyle()) == "$14,500"
     assert service._display_word("really?", CaptionStyle()) == "REALLY?"
 

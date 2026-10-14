@@ -27,7 +27,7 @@ function draftFor(automation: Automation): AutomationUpdate {
   return { name: automation.name, enabled: automation.enabled, profileId: automation.profileId, metadataMode: automation.metadataMode, accounts: automation.accounts, times: automation.times, timezone: automation.timezone, youtubeVisibility: automation.youtubeVisibility, youtubeMadeForKids: automation.youtubeMadeForKids }
 }
 
-const SELECTED_STORAGE_KEY = 'bridgeclip.automations.selectedId'
+const SELECTED_STORAGE_KEY = 'reelferry.automations.selectedId'
 
 function rememberSelection(id: string | null): void {
   try {
@@ -475,7 +475,7 @@ export function AutomationsPage({ onNavigate }: { onNavigate: (page: PageName) =
                   <Row
                     label="Schedule"
                     labelId="automation-schedule"
-                    hint="One clip posts at each time, daily. BridgeClip must be open; after sleep, a run can start up to 5 minutes late."
+                    hint="One clip posts at each time, daily. Reelferry must be open; after sleep, a run can start up to 5 minutes late."
                   >
                     <div role="group" aria-labelledby="automation-schedule" className="flex flex-wrap items-center gap-1">
                       {draft.times.map((time) => (

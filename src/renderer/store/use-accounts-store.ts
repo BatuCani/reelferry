@@ -14,7 +14,7 @@ import {
   isValidProfileName
 } from '../../shared/zernio'
 
-const PROFILE_STORAGE_KEY = 'bridgeclip.zernio.profileId'
+const PROFILE_STORAGE_KEY = 'reelferry.zernio.profileId'
 /**
  * Coming back to the window refreshes at most this often. A refresh costs 3
  * Zernio requests and the free tier allows 60 a minute, so there is no polling.
@@ -37,7 +37,7 @@ interface Connecting {
 export interface AccountsNotice {
   tone: 'success' | 'danger' | 'neutral'
   text: string
-  /** A next step the notice offers: Zernio's billing page, or BridgeClip's Settings. */
+  /** A next step the notice offers: Zernio's billing page, or Reelferry's Settings. */
   action?: 'billing' | 'settings'
 }
 

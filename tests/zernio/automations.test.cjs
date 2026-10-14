@@ -28,7 +28,7 @@ test('daily slots use the configured time zone and include a short restart grace
 })
 
 test('library clips can be copied to a bank only from their saved run', async () => {
-  const { dir, cleanup } = tempDir('bridgeclip-library-bank-')
+  const { dir, cleanup } = tempDir('reelferry-library-bank-')
   try {
     const library = path.join(dir, 'library')
     const run = path.join(library, 'run-one')
@@ -61,7 +61,7 @@ test('library clips can be copied to a bank only from their saved run', async ()
 })
 
 test('automation imports require prior media authorization for files outside the library', async () => {
-  const { dir, cleanup } = tempDir('bridgeclip-bank-authorization-')
+  const { dir, cleanup } = tempDir('reelferry-bank-authorization-')
   try {
     const library = path.join(dir, 'library')
     const outside = path.join(dir, 'private.mp4')
@@ -81,7 +81,7 @@ test('automation imports require prior media authorization for files outside the
 })
 
 test('a failed batch import leaves no copied clips to duplicate on retry', async () => {
-  const { dir, cleanup } = tempDir('bridgeclip-bank-batch-')
+  const { dir, cleanup } = tempDir('reelferry-bank-batch-')
   try {
     const library = path.join(dir, 'library')
     fs.mkdirSync(library)
@@ -103,7 +103,7 @@ test('a failed batch import leaves no copied clips to duplicate on retry', async
 })
 
 test('a key switch during an automation import cannot overwrite the old workspace', async () => {
-  const { dir, cleanup } = tempDir('bridgeclip-bank-key-switch-')
+  const { dir, cleanup } = tempDir('reelferry-bank-key-switch-')
   try {
     const library = path.join(dir, 'library')
     fs.mkdirSync(library)
@@ -133,12 +133,12 @@ test('a key switch during an automation import cannot overwrite the old workspac
 })
 
 test('an upload failure keeps an automation clip retryable without creating a post', async () => {
-  const { dir, cleanup } = tempDir('bridgeclip-automation-upload-')
+  const { dir, cleanup } = tempDir('reelferry-automation-upload-')
   const posting = createPostingMock()
   const mock = await createMockZernio({ apiKey: KEY, extraRoutes: posting.routes })
-  const previousUrl = process.env.BRIDGECLIP_ZERNIO_API_URL
+  const previousUrl = process.env.REELFERRY_ZERNIO_API_URL
   const previousPath = process.env.PATH
-  process.env.BRIDGECLIP_ZERNIO_API_URL = mock.apiUrl
+  process.env.REELFERRY_ZERNIO_API_URL = mock.apiUrl
   process.env.PATH = `${previousPath}${path.delimiter}${path.join(ROOT, 'engine-bin')}`
   try {
     const library = path.join(dir, 'library')
@@ -175,8 +175,8 @@ test('an upload failure keeps an automation clip retryable without creating a po
     assert.equal(posted.content[0].status, 'posted')
     assert.equal(posting.state.creates.length, 1)
   } finally {
-    if (previousUrl === undefined) delete process.env.BRIDGECLIP_ZERNIO_API_URL
-    else process.env.BRIDGECLIP_ZERNIO_API_URL = previousUrl
+    if (previousUrl === undefined) delete process.env.REELFERRY_ZERNIO_API_URL
+    else process.env.REELFERRY_ZERNIO_API_URL = previousUrl
     process.env.PATH = previousPath
     await mock.close()
     cleanup()
@@ -184,12 +184,12 @@ test('an upload failure keeps an automation clip retryable without creating a po
 })
 
 test('a reviewed uncertain post can return to the queue after its replay window expires', async () => {
-  const { dir, cleanup } = tempDir('bridgeclip-automation-reviewed-retry-')
+  const { dir, cleanup } = tempDir('reelferry-automation-reviewed-retry-')
   const posting = createPostingMock()
   const mock = await createMockZernio({ apiKey: KEY, extraRoutes: posting.routes })
-  const previousUrl = process.env.BRIDGECLIP_ZERNIO_API_URL
+  const previousUrl = process.env.REELFERRY_ZERNIO_API_URL
   const previousPath = process.env.PATH
-  process.env.BRIDGECLIP_ZERNIO_API_URL = mock.apiUrl
+  process.env.REELFERRY_ZERNIO_API_URL = mock.apiUrl
   process.env.PATH = `${previousPath}${path.delimiter}${path.join(ROOT, 'engine-bin')}`
   const realNow = Date.now
   try {
@@ -230,8 +230,8 @@ test('a reviewed uncertain post can return to the queue after its replay window 
     assert.ok(JSON.parse(fs.readFileSync(journal, 'utf8')).attempts.some(([id]) => id === oldAttemptId), 'the uncertain attempt stays in the audit journal')
   } finally {
     Date.now = realNow
-    if (previousUrl === undefined) delete process.env.BRIDGECLIP_ZERNIO_API_URL
-    else process.env.BRIDGECLIP_ZERNIO_API_URL = previousUrl
+    if (previousUrl === undefined) delete process.env.REELFERRY_ZERNIO_API_URL
+    else process.env.REELFERRY_ZERNIO_API_URL = previousUrl
     process.env.PATH = previousPath
     await mock.close()
     cleanup()
@@ -239,7 +239,7 @@ test('a reviewed uncertain post can return to the queue after its replay window 
 })
 
 test('generated copy enforces platform fields, X weights and grounded Threads topics', () => {
-  const { dir, cleanup } = tempDir('bridgeclip-metadata-')
+  const { dir, cleanup } = tempDir('reelferry-metadata-')
   try {
     const { parseGeneratedMetadata } = loadMain("export { parseGeneratedMetadata } from './src/main/automation-metadata'", { electron: fakeElectron(dir).electron })
     const transcript = 'Building reliable automations starts with accurate transcripts.'
@@ -261,7 +261,7 @@ test('generated copy enforces platform fields, X weights and grounded Threads to
 })
 
 test('grounding accepts quotes that tidy spoken stutters but rejects changed or stitched words', () => {
-  const { dir, cleanup } = tempDir('bridgeclip-evidence-')
+  const { dir, cleanup } = tempDir('reelferry-evidence-')
   try {
     const { evidenceInTranscript } = loadMain("export { evidenceInTranscript } from './src/main/automation-metadata'", { electron: fakeElectron(dir).electron })
     // The transcript of the clip whose Facebook metadata failed verification on every run.
@@ -286,7 +286,7 @@ test('grounding accepts quotes that tidy spoken stutters but rejects changed or 
 })
 
 test('a clip that failed to prepare waits behind clips that have not', () => {
-  const { dir, cleanup } = tempDir('bridgeclip-next-clip-')
+  const { dir, cleanup } = tempDir('reelferry-next-clip-')
   try {
     const { nextAutomationContent } = loadMain("export { nextAutomationContent } from './src/shared/automations'", { electron: fakeElectron(dir).electron })
     const clip = (id, status, error = null) => ({ id, status, error, tiktokApproval: null })
@@ -299,7 +299,7 @@ test('a clip that failed to prepare waits behind clips that have not', () => {
 })
 
 test('AI metadata retries ungrounded and invalid model responses before accepting them', async () => {
-  const { dir, cleanup } = tempDir('bridgeclip-automation-retry-')
+  const { dir, cleanup } = tempDir('reelferry-automation-retry-')
   const transcript = 'Building reliable automations starts with accurate transcripts.'
   let requests = 0
   const mock = await createMockZernio({ apiKey: KEY, extraRoutes: [{
@@ -311,8 +311,8 @@ test('AI metadata retries ungrounded and invalid model responses before acceptin
       return ctx.json(200, { choices: [{ message: { content: JSON.stringify({ posts: [post] }) } }] })
     }
   }] })
-  const previousUrl = process.env.BRIDGECLIP_E2E_OPENROUTER_URL
-  process.env.BRIDGECLIP_E2E_OPENROUTER_URL = `${mock.url}/chat/completions`
+  const previousUrl = process.env.REELFERRY_E2E_OPENROUTER_URL
+  process.env.REELFERRY_E2E_OPENROUTER_URL = `${mock.url}/chat/completions`
   try {
     const main = loadMain("export { generateAutomationMetadata } from './src/main/automation-metadata'; export * as settings from './src/main/settings-store'", { electron: fakeElectron(dir).electron })
     main.settings.replaceApiKey('openrouterApiKey', 'test-openrouter-key')
@@ -324,20 +324,20 @@ test('AI metadata retries ungrounded and invalid model responses before acceptin
     assert.equal(requests, 4, 'a used-field validation error also gets one repair attempt')
     assert.equal(second[0].caption, 'Accurate transcripts help build reliable automations.')
   } finally {
-    if (previousUrl === undefined) delete process.env.BRIDGECLIP_E2E_OPENROUTER_URL
-    else process.env.BRIDGECLIP_E2E_OPENROUTER_URL = previousUrl
+    if (previousUrl === undefined) delete process.env.REELFERRY_E2E_OPENROUTER_URL
+    else process.env.REELFERRY_E2E_OPENROUTER_URL = previousUrl
     await mock.close()
     cleanup()
   }
 })
 
 test('bank clips publish once to selected accounts and keep their used state after restart', async () => {
-  const { dir, cleanup } = tempDir('bridgeclip-automations-')
+  const { dir, cleanup } = tempDir('reelferry-automations-')
   const posting = createPostingMock()
   const mock = await createMockZernio({ apiKey: KEY, extraRoutes: posting.routes })
-  const previousUrl = process.env.BRIDGECLIP_ZERNIO_API_URL
+  const previousUrl = process.env.REELFERRY_ZERNIO_API_URL
   const previousPath = process.env.PATH
-  process.env.BRIDGECLIP_ZERNIO_API_URL = mock.apiUrl
+  process.env.REELFERRY_ZERNIO_API_URL = mock.apiUrl
   process.env.PATH = `${previousPath}${path.delimiter}${path.join(ROOT, 'engine-bin')}`
   try {
     const library = path.join(dir, 'library')
@@ -356,8 +356,8 @@ test('bank clips publish once to selected accounts and keep their used state aft
     const instagram = mock.addAccount('instagram', profile._id, { username: 'creator' })
     const otherAccount = mock.addAccount('twitter', otherProfile._id, { username: 'other' })
 
-    const [created] = main.automations.createAutomation('BridgeMind')
-    const update = { name: 'BridgeMind', enabled: true, profileId: profile._id, metadataMode: 'manual', timezone: 'UTC', times: ['12:00'], youtubeVisibility: 'unlisted', youtubeMadeForKids: false, accounts: [
+    const [created] = main.automations.createAutomation('Daily highlights')
+    const update = { name: 'Daily highlights', enabled: true, profileId: profile._id, metadataMode: 'manual', timezone: 'UTC', times: ['12:00'], youtubeVisibility: 'unlisted', youtubeMadeForKids: false, accounts: [
       { platform: 'youtube', accountId: youtube._id }, { platform: 'instagram', accountId: instagram._id }
     ] }
     await assert.rejects(main.automations.updateAutomation(created.id, { ...update, accounts: [...update.accounts, { platform: 'twitter', accountId: otherAccount._id }] }), /no longer in this Zernio profile/)
@@ -431,8 +431,8 @@ test('bank clips publish once to selected accounts and keep their used state aft
     assert.equal(upgraded.metadataMode, 'manual')
     assert.equal(upgraded.content.length, 3, 'the version-2 bank survives the metadata migration')
   } finally {
-    if (previousUrl === undefined) delete process.env.BRIDGECLIP_ZERNIO_API_URL
-    else process.env.BRIDGECLIP_ZERNIO_API_URL = previousUrl
+    if (previousUrl === undefined) delete process.env.REELFERRY_ZERNIO_API_URL
+    else process.env.REELFERRY_ZERNIO_API_URL = previousUrl
     process.env.PATH = previousPath
     await mock.close()
     cleanup()
@@ -440,7 +440,7 @@ test('bank clips publish once to selected accounts and keep their used state aft
 })
 
 test('AI automation transcribes the bank clip and sends distinct grounded metadata to each platform', async () => {
-  const { dir, cleanup } = tempDir('bridgeclip-automation-ai-')
+  const { dir, cleanup } = tempDir('reelferry-automation-ai-')
   const posting = createPostingMock()
   const transcript = 'Building reliable automations starts with accurate transcripts.'
   const metadata = { posts: [
@@ -465,14 +465,14 @@ test('AI automation transcribes the bank clip and sends distinct grounded metada
     { method: 'POST', path: '/chat/completions', auth: false, handler: (ctx) => ctx.json(200, { choices: [{ message: { content: JSON.stringify(metadata) } }] }) }
   ] })
   const previous = {
-    zernio: process.env.BRIDGECLIP_ZERNIO_API_URL,
-    transcription: process.env.BRIDGECLIP_E2E_TRANSCRIPTION_URL,
-    openrouter: process.env.BRIDGECLIP_E2E_OPENROUTER_URL,
+    zernio: process.env.REELFERRY_ZERNIO_API_URL,
+    transcription: process.env.REELFERRY_E2E_TRANSCRIPTION_URL,
+    openrouter: process.env.REELFERRY_E2E_OPENROUTER_URL,
     path: process.env.PATH
   }
-  process.env.BRIDGECLIP_ZERNIO_API_URL = mock.apiUrl
-  process.env.BRIDGECLIP_E2E_TRANSCRIPTION_URL = `${mock.url}/speech-to-text`
-  process.env.BRIDGECLIP_E2E_OPENROUTER_URL = `${mock.url}/chat/completions`
+  process.env.REELFERRY_ZERNIO_API_URL = mock.apiUrl
+  process.env.REELFERRY_E2E_TRANSCRIPTION_URL = `${mock.url}/speech-to-text`
+  process.env.REELFERRY_E2E_OPENROUTER_URL = `${mock.url}/chat/completions`
   process.env.PATH = `${previous.path}${path.delimiter}${path.join(ROOT, 'engine-bin')}`
   try {
     const library = path.join(dir, 'library')
@@ -523,9 +523,9 @@ test('AI automation transcribes the bank clip and sends distinct grounded metada
     assert.equal(posting.state.creates.length, 1, 'unverified AI output never reaches Zernio')
   } finally {
     for (const [name, value] of Object.entries({
-      BRIDGECLIP_ZERNIO_API_URL: previous.zernio,
-      BRIDGECLIP_E2E_TRANSCRIPTION_URL: previous.transcription,
-      BRIDGECLIP_E2E_OPENROUTER_URL: previous.openrouter,
+      REELFERRY_ZERNIO_API_URL: previous.zernio,
+      REELFERRY_E2E_TRANSCRIPTION_URL: previous.transcription,
+      REELFERRY_E2E_OPENROUTER_URL: previous.openrouter,
       PATH: previous.path
     })) {
       if (value === undefined) delete process.env[name]
@@ -537,7 +537,7 @@ test('AI automation transcribes the bank clip and sends distinct grounded metada
 })
 
 test('TikTok automations require per-clip review, preserve approved copy, and publish once per slot', async () => {
-  const { dir, cleanup } = tempDir('bridgeclip-automation-tiktok-')
+  const { dir, cleanup } = tempDir('reelferry-automation-tiktok-')
   const posting = createPostingMock()
   let generations = 0
   const mock = await createMockZernio({ apiKey: KEY, extraRoutes: [
@@ -553,9 +553,9 @@ test('TikTok automations require per-clip review, preserve approved copy, and pu
     } }
   ] })
   const environment = {
-    BRIDGECLIP_ZERNIO_API_URL: mock.apiUrl,
-    BRIDGECLIP_E2E_TRANSCRIPTION_URL: `${mock.url}/speech`,
-    BRIDGECLIP_E2E_OPENROUTER_URL: `${mock.url}/metadata`,
+    REELFERRY_ZERNIO_API_URL: mock.apiUrl,
+    REELFERRY_E2E_TRANSCRIPTION_URL: `${mock.url}/speech`,
+    REELFERRY_E2E_OPENROUTER_URL: `${mock.url}/metadata`,
     PATH: `${process.env.PATH}${path.delimiter}${path.join(ROOT, 'engine-bin')}`
   }
   const previous = Object.fromEntries(Object.keys(environment).map((name) => [name, process.env[name]]))

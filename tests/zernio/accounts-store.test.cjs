@@ -46,7 +46,7 @@ function load({ cached = null, pending = null } = {}) {
     onConnectResult: (cb) => { handlers.result.push(cb); return () => {} },
     onReset: (cb) => { handlers.reset.push(cb); return () => {} }
   }
-  const window = { bridgeclip: { zernio }, addEventListener: (type, fn) => { if (type === 'focus') handlers.focus.push(fn) } }
+  const window = { reelferry: { zernio }, addEventListener: (type, fn) => { if (type === 'focus') handlers.focus.push(fn) } }
   const module = { exports: {} }
   vm.runInNewContext(bundle, { module, exports: module.exports, require, window, setImmediate, Date, Promise, console })
   const store = module.exports.useAccountsStore
@@ -342,7 +342,7 @@ test('a timeout checks once more, then says it stopped waiting', async () => {
   await s.state().load()
   await s.state().connect('threads')
   s.queueSync({ overview: overview([]), stale: false, error: null })
-  s.emitResult({ platform: 'threads', success: false, ended: 'timeout', error: 'BridgeClip stopped waiting for the browser after 10 minutes.' })
+  s.emitResult({ platform: 'threads', success: false, ended: 'timeout', error: 'Reelferry stopped waiting for the browser after 10 minutes.' })
   await flush(); await flush()
   assert.equal(s.state().connecting, null)
   assert.equal(s.state().notice.tone, 'neutral')

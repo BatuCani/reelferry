@@ -38,7 +38,7 @@ function errorCode(error: unknown): string {
 }
 
 function macBundlePath(): string {
-  // …/BridgeClip.app/Contents/MacOS/BridgeClip. A macOS path, so resolve it
+  // …/Reelferry.app/Contents/MacOS/Reelferry. A macOS path, so resolve it
   // with POSIX rules on every host (the tests run on Windows too).
   return posix.resolve(app.getPath('exe'), '..', '..', '..')
 }
@@ -53,7 +53,7 @@ function signedByBridgeMind(): Promise<boolean> {
 }
 
 async function updatesOffReason(): Promise<UpdatesOffReason | null> {
-  if (process.env.BRIDGECLIP_DISABLE_AUTO_UPDATE === '1') return 'disabled'
+  if (process.env.REELFERRY_DISABLE_AUTO_UPDATE === '1') return 'disabled'
   if (is.dev || !app.isPackaged) return 'development'
   if (process.platform === 'darwin') {
     if (!(await signedByBridgeMind())) return 'unofficial'
@@ -122,8 +122,8 @@ function registerIpc(): void {
             buttons: ['Replace', 'Cancel'],
             defaultId: 1,
             cancelId: 1,
-            message: 'Replace the BridgeClip in your Applications folder?',
-            detail: 'Applications already has a copy of BridgeClip. Replacing it moves that copy to the Trash.'
+            message: 'Replace the Reelferry in your Applications folder?',
+            detail: 'Applications already has a copy of Reelferry. Replacing it moves that copy to the Trash.'
           }
           const window = getWindow()
           return (window ? dialog.showMessageBoxSync(window, options) : dialog.showMessageBoxSync(options)) === 0

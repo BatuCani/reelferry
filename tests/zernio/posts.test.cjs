@@ -551,9 +551,9 @@ async function withPosting(fn, { clip = {}, mockOptions = {} } = {}) {
   const { dir, cleanup } = tempDir()
   const posting = createPostingMock()
   const mock = await createMockZernio({ apiKey: KEY, extraRoutes: posting.routes, ...mockOptions })
-  const previousUrl = process.env.BRIDGECLIP_ZERNIO_API_URL
+  const previousUrl = process.env.REELFERRY_ZERNIO_API_URL
   const previousPath = process.env.PATH
-  process.env.BRIDGECLIP_ZERNIO_API_URL = mock.apiUrl
+  process.env.REELFERRY_ZERNIO_API_URL = mock.apiUrl
   // ffprobe as the packaged app ships it, when the machine has none.
   process.env.PATH = `${previousPath}${path.delimiter}${path.join(ROOT, 'engine-bin')}`
   try {
@@ -588,8 +588,8 @@ async function withPosting(fn, { clip = {}, mockOptions = {} } = {}) {
     }, (p) => progress.push(p))
     await fn({ mock, posting, main, electron, clipPath, accounts, publish, progress, calls, userData: path.join(dir, 'userData') })
   } finally {
-    if (previousUrl === undefined) delete process.env.BRIDGECLIP_ZERNIO_API_URL
-    else process.env.BRIDGECLIP_ZERNIO_API_URL = previousUrl
+    if (previousUrl === undefined) delete process.env.REELFERRY_ZERNIO_API_URL
+    else process.env.REELFERRY_ZERNIO_API_URL = previousUrl
     process.env.PATH = previousPath
     await mock.close()
     cleanup()

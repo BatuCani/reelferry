@@ -1,11 +1,11 @@
 'use strict'
-// Builds BridgeClip into a scratch folder and launches it as an isolated
+// Builds Reelferry into a scratch folder and launches it as an isolated
 // Electron instance for end-to-end tests. The instance gets its own userData
 // (and single-instance lock), talks to a mock Zernio, uses a scripted browser
 // instead of the real one, a mock keychain, and a hidden window. It never
 // touches the repo's out/ folder or a running `npm run dev`.
 //
-// Uses the pinned playwright-core dev dependency. BRIDGECLIP_E2E_TOOLS can
+// Uses the pinned playwright-core dev dependency. REELFERRY_E2E_TOOLS can
 // point to an isolated installation when running against a local checkout.
 
 const { execFileSync } = require('node:child_process')
@@ -16,19 +16,19 @@ const path = require('node:path')
 const ROOT = path.resolve(__dirname, '../../..')
 
 function playwright() {
-  for (const base of [process.env.BRIDGECLIP_E2E_TOOLS, ROOT].filter(Boolean)) {
+  for (const base of [process.env.REELFERRY_E2E_TOOLS, ROOT].filter(Boolean)) {
     try {
       return require(require.resolve('playwright-core', { paths: [base] }))
     } catch { /* try the next place */ }
   }
-  throw new Error('playwright-core not found. Install it outside the repo and set BRIDGECLIP_E2E_TOOLS to that folder.')
+  throw new Error('playwright-core not found. Install it outside the repo and set REELFERRY_E2E_TOOLS to that folder.')
 }
 
 /**
  * Production-builds the app into `appDir/out` and makes `appDir` launchable
  * (package.json + a node_modules link for externalised dependencies).
  */
-function buildApp(appDir = process.env.BRIDGECLIP_E2E_APP_DIR || path.join(os.tmpdir(), 'bridgeclip-e2e-app'), { skipBuild = process.env.BRIDGECLIP_E2E_SKIP_BUILD === '1' } = {}) {
+function buildApp(appDir = process.env.REELFERRY_E2E_APP_DIR || path.join(os.tmpdir(), 'reelferry-e2e-app'), { skipBuild = process.env.REELFERRY_E2E_SKIP_BUILD === '1' } = {}) {
   fs.mkdirSync(appDir, { recursive: true })
   if (!skipBuild || !fs.existsSync(path.join(appDir, 'out/main/index.js'))) {
     const npx = process.platform === 'win32' ? 'npx.cmd' : 'npx'
@@ -53,9 +53,9 @@ async function launchApp({ appDir, userDataDir, mock, apiUrl, env = {} }) {
     throw new Error('This build predates full userData isolation; rebuild before launching it.')
   }
   // Settings for a fresh run, with no keys and an output folder inside the
-  // isolated dir (the app's default is the real ~/BridgeClip).
+  // isolated dir (the app's default is the real ~/Reelferry).
   const settingsFile = path.join(userDataDir, 'settings.json')
-  const outputDirectory = path.join(userDataDir, 'BridgeClip')
+  const outputDirectory = path.join(userDataDir, 'Reelferry')
   if (!fs.existsSync(settingsFile)) {
     fs.mkdirSync(userDataDir, { recursive: true })
     fs.writeFileSync(settingsFile, JSON.stringify({ version: 6, openrouterApiKey: '', zernioApiKey: '', outputDirectory, pythonPath: 'python3',  }), { mode: 0o600 })
@@ -63,7 +63,7 @@ async function launchApp({ appDir, userDataDir, mock, apiUrl, env = {} }) {
   const { _electron } = playwright()
   const electronPath = require(path.join(ROOT, 'node_modules/electron'))
   const cleanEnv = { ...process.env }
-  for (const name of ['ELECTRON_RUN_AS_NODE', 'ELECTRON_RENDERER_URL', 'BRIDGECLIP_ZERNIO_API_URL', 'BRIDGECLIP_E2E_BROWSER_URL']) delete cleanEnv[name]
+  for (const name of ['ELECTRON_RUN_AS_NODE', 'ELECTRON_RENDERER_URL', 'REELFERRY_ZERNIO_API_URL', 'REELFERRY_E2E_BROWSER_URL']) delete cleanEnv[name]
   const app = await _electron.launch({
     executablePath: electronPath,
     // A mock keychain keeps safeStorage off the developer's real keychain.
@@ -71,11 +71,11 @@ async function launchApp({ appDir, userDataDir, mock, apiUrl, env = {} }) {
     env: {
       ...cleanEnv,
       ...env,
-      ...(mock || apiUrl ? { BRIDGECLIP_ZERNIO_API_URL: apiUrl ?? mock.apiUrl } : {}),
-      ...(mock ? { BRIDGECLIP_E2E_BROWSER_URL: mock.browserUrl } : {}),
+      ...(mock || apiUrl ? { REELFERRY_ZERNIO_API_URL: apiUrl ?? mock.apiUrl } : {}),
+      ...(mock ? { REELFERRY_E2E_BROWSER_URL: mock.browserUrl } : {}),
       // Isolation (own userData, hidden window, no real browser) can't be overridden.
-      BRIDGECLIP_USER_DATA_DIR: userDataDir,
-      BRIDGECLIP_E2E: '1'
+      REELFERRY_USER_DATA_DIR: userDataDir,
+      REELFERRY_E2E: '1'
     },
     timeout: 60_000
   })
@@ -89,7 +89,7 @@ async function launchApp({ appDir, userDataDir, mock, apiUrl, env = {} }) {
   }
   const page = await app.firstWindow()
   await page.waitForLoadState('domcontentloaded')
-  const settings = await page.evaluate(() => window.bridgeclip.settings.load())
+  const settings = await page.evaluate(() => window.reelferry.settings.load())
   if (!real(settings.outputDirectory).startsWith(root) && !path.resolve(settings.outputDirectory).startsWith(path.resolve(userDataDir))) {
     await app.close().catch(() => {})
     throw new Error(`The test app's output folder is outside ${userDataDir}.`)

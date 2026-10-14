@@ -11,11 +11,11 @@ const { loadMain, tempDir, fakeElectron, ROOT } = require('./support/load-main.c
 const SOURCE = "export * as automations from './src/main/automations'; export * as settings from './src/main/settings-store'"
 
 async function withTikTokBank(run) {
-  const { dir, cleanup } = tempDir('bridgeclip-tiktok-review-')
+  const { dir, cleanup } = tempDir('reelferry-tiktok-review-')
   const posting = createPostingMock()
   const mock = await createMockZernio({ apiKey: 'tiktok-review-test', extraRoutes: posting.routes })
-  const previous = { url: process.env.BRIDGECLIP_ZERNIO_API_URL, path: process.env.PATH }
-  process.env.BRIDGECLIP_ZERNIO_API_URL = mock.apiUrl
+  const previous = { url: process.env.REELFERRY_ZERNIO_API_URL, path: process.env.PATH }
+  process.env.REELFERRY_ZERNIO_API_URL = mock.apiUrl
   process.env.PATH = `${previous.path}${path.delimiter}${path.join(ROOT, 'engine-bin')}`
   try {
     const library = path.join(dir, 'library')
@@ -46,8 +46,8 @@ async function withTikTokBank(run) {
     await run({ api: main.automations, id: bank.id, contentId, account, update, request, posting, mock,
       failWrites: (value) => { failWrites = value }, restart: () => loadMain(SOURCE, mocks).automations })
   } finally {
-    if (previous.url === undefined) delete process.env.BRIDGECLIP_ZERNIO_API_URL
-    else process.env.BRIDGECLIP_ZERNIO_API_URL = previous.url
+    if (previous.url === undefined) delete process.env.REELFERRY_ZERNIO_API_URL
+    else process.env.REELFERRY_ZERNIO_API_URL = previous.url
     process.env.PATH = previous.path
     await mock.close()
     cleanup()

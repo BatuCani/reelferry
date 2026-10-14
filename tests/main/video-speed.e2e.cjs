@@ -6,7 +6,7 @@ const path = require('node:path')
 const { buildApp, launchApp } = require('../zernio/support/electron-app.cjs')
 
 test('video speed supports keyboard selection, review, submission and reuse in Electron', { timeout: 90000 }, async (t) => {
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'bridgeclip-speed-e2e-'))
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'reelferry-speed-e2e-'))
   const appDir = buildApp(path.join(root, 'app'))
   const session = await launchApp({ appDir, userDataDir: path.join(root, 'user-data') })
   t.after(async () => { await session.close(); fs.rmSync(root, { recursive: true, force: true }) })
@@ -44,7 +44,7 @@ test('video speed supports keyboard selection, review, submission and reuse in E
   await page.getByRole('radio', { name: /Vertical/ }).click()
   // Screenshots are opt-in evidence: hidden Linux CI windows need not have
   // a drawable compositor surface for the functional assertions below.
-  const artifacts = process.env.BRIDGECLIP_E2E_SHOTS
+  const artifacts = process.env.REELFERRY_E2E_SHOTS
   if (artifacts) {
     fs.mkdirSync(artifacts, { recursive: true })
     await page.screenshot({ path: path.join(artifacts, 'video-speed.png') })

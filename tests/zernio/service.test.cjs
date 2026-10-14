@@ -23,15 +23,15 @@ async function setup(t, { isPackaged = false, key = KEY, browserHook = false, mo
   const tmp = tempDir()
   const mock = await createMockZernio({ apiKey: KEY, ...mockOptions })
   const fake = fakeElectron(tmp.dir, { isPackaged })
-  process.env.BRIDGECLIP_ZERNIO_API_URL = mock.apiUrl
-  if (browserHook) process.env.BRIDGECLIP_E2E_BROWSER_URL = mock.browserUrl
+  process.env.REELFERRY_ZERNIO_API_URL = mock.apiUrl
+  if (browserHook) process.env.REELFERRY_E2E_BROWSER_URL = mock.browserUrl
   const service = loadMain(ENTRY, { electron: fake.electron })
   if (key) service.replaceApiKey('zernioApiKey', key)
   const getWindow = () => fake.window
   t.after(async () => {
     service.cancelZernioConnect()
-    delete process.env.BRIDGECLIP_ZERNIO_API_URL
-    delete process.env.BRIDGECLIP_E2E_BROWSER_URL
+    delete process.env.REELFERRY_ZERNIO_API_URL
+    delete process.env.REELFERRY_E2E_BROWSER_URL
     await mock.close()
     tmp.cleanup()
   })
@@ -178,12 +178,12 @@ test('connect: API failures come back as structured errors the UI can act on', a
   assert.equal(service.isCallbackPending(), false)
 })
 
-test('connect: with no profile it uses the default one, or creates one for BridgeClip', async (t) => {
+test('connect: with no profile it uses the default one, or creates one for Reelferry', async (t) => {
   const { service, mock, getWindow } = await setup(t, { mockOptions: { withDefaultProfile: false } })
   const first = await service.connectZernioAccount('threads', null, undefined, getWindow)
   assert.equal(first.status, 'pending')
   assert.equal(mock.state.profiles.length, 1)
-  assert.equal(mock.state.profiles[0].name, 'BridgeClip')
+  assert.equal(mock.state.profiles[0].name, 'Reelferry')
   assert.equal(first.profileId, mock.state.profiles[0]._id)
   const second = await service.connectZernioAccount('threads', null, undefined, getWindow)
   assert.equal(second.profileId, first.profileId, 'no duplicate profile')
@@ -352,8 +352,8 @@ test('connect: gives up after 10 minutes without a redirect and says so', async 
 
 test('dev hooks: the scripted browser is used only in unpackaged builds', async (t) => {
   const { service, mock, fake, getWindow, results } = await setup(t, { browserHook: true })
-  process.env.BRIDGECLIP_E2E = '1'
-  t.after(() => { delete process.env.BRIDGECLIP_E2E })
+  process.env.REELFERRY_E2E = '1'
+  t.after(() => { delete process.env.REELFERRY_E2E })
   await service.connectZernioAccount('instagram', mock.state.profiles[0]._id, undefined, getWindow)
   assert.equal(fake.calls.openExternal.length, 0)
   assert.equal(mock.state.opened.length, 1)

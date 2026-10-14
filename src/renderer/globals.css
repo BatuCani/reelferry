@@ -20,7 +20,7 @@
   font-display: swap;
 }
 
-/* BridgeClip glass. Surfaces are flat translucent layers over one solid dark
+/* Reelferry glass. Surfaces are flat translucent layers over one solid dark
    backdrop. No gradients anywhere: every fill is a single colour. Ink stays
    opaque; colour comes from the video, the one primary action, chosen options
    and status. */
@@ -39,7 +39,7 @@
     --accent: 92 143 255;
     --accent-hover: 134 176 255;
     --accent-ink: 255 255 255;
-    --accent-cyan: 56 204 255;  /* BridgeMind mark */
+    --accent-cyan: 56 204 255;
 
     --success: 74 222 128;
     --danger: 255 107 110;

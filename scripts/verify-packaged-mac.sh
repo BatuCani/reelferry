@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-app_path="${1:?Pass the packaged BridgeClip.app path}"
+app_path="${1:?Pass the packaged Reelferry.app path}"
 target_arch="${2:?Pass arm64 or x64}"
 case "$target_arch" in
   arm64) mach_arch="arm64" ;;
@@ -85,7 +85,7 @@ PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$resources/engine" "$resources/engine-venv
 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$resources/engine" "$resources/engine-venv/bin/python3" \
   "$resources/bridge/smoke_transcription_audio.py" "$resources/engine-bin"
 
-smoke_ass="$(mktemp -t bridgeclip-packaged-captions).ass"
+smoke_ass="$(mktemp -t reelferry-packaged-captions).ass"
 trap 'rm -f "$smoke_ass"' EXIT
 cat > "$smoke_ass" <<'ASS'
 [Script Info]

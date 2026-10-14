@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# Regenerates the BridgeClip app icon: build/icon.png, build/icon.icns,
-# build/icon.ico and SVG compatibility exports in resources/.
-# Source: resources/bridgeclip-icon.png (imagegen). macOS only (sips + iconutil).
+# Regenerates the Reelferry app icon: build/icon.png, build/icon.icns and
+# build/icon.ico. Source: resources/reelferry-icon.png, rendered from
+# resources/reelferry-icon.svg (see README.md). macOS only (sips + iconutil).
 #
 #   bash scripts/icon/build-icons.sh
 #
@@ -14,9 +14,6 @@ trap 'rm -rf "$WORK"' EXIT
 
 node "$ROOT/scripts/icon/render.js" "$WORK"
 
-cp "$WORK/full.svg" "$ROOT/resources/bridgeclip-icon.svg"
-cp "$WORK/compact.svg" "$ROOT/resources/bridgeclip-icon-small.svg"
-
 resize() {
   local size=$1 out=$2
   cp "$WORK/icon-$size.png" "$out"
@@ -24,7 +21,7 @@ resize() {
 
 resize 1024 "$ROOT/build/icon.png"
 
-ICONSET="$WORK/BridgeClip.iconset"
+ICONSET="$WORK/Reelferry.iconset"
 mkdir -p "$ICONSET"
 for size in 16 32 128 256 512; do
   resize "$size" "$ICONSET/icon_${size}x${size}.png"
@@ -59,4 +56,4 @@ const entries = sizes.map((s, i) => {
 fs.writeFileSync(process.env.OUT, Buffer.concat([header, ...entries, ...images]))
 '
 
-echo "Icons written to build/ and resources/"
+echo "Icons written to build/"

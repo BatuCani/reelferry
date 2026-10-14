@@ -28,12 +28,12 @@ function makeClip(file) {
 // ZER-1: the upload/request-id journal must not write through a predictable
 // temp path. A symlink planted at `<journal>.tmp` used to redirect the write.
 test('the post attempt journal ignores a planted temp-path symlink and is written exclusively', { skip: !fileLinksAvailable }, async () => {
-  const { dir, cleanup } = tempDir('bridgeclip-audit-attempts-')
+  const { dir, cleanup } = tempDir('reelferry-audit-attempts-')
   const posting = createPostingMock()
   const mock = await createMockZernio({ apiKey: KEY, extraRoutes: posting.routes })
-  const previousUrl = process.env.BRIDGECLIP_ZERNIO_API_URL
+  const previousUrl = process.env.REELFERRY_ZERNIO_API_URL
   const previousPath = process.env.PATH
-  process.env.BRIDGECLIP_ZERNIO_API_URL = mock.apiUrl
+  process.env.REELFERRY_ZERNIO_API_URL = mock.apiUrl
   process.env.PATH = `${previousPath}${path.delimiter}${path.join(ROOT, 'engine-bin')}`
   try {
     const library = path.join(dir, 'library')
@@ -66,8 +66,8 @@ test('the post attempt journal ignores a planted temp-path symlink and is writte
     assert.equal(saved.workspace, workspace(KEY))
     assert.equal(fs.readdirSync(userData).filter((name) => /\.tmp$/.test(name)).length, 1, 'no random temp files are left behind')
   } finally {
-    if (previousUrl === undefined) delete process.env.BRIDGECLIP_ZERNIO_API_URL
-    else process.env.BRIDGECLIP_ZERNIO_API_URL = previousUrl
+    if (previousUrl === undefined) delete process.env.REELFERRY_ZERNIO_API_URL
+    else process.env.REELFERRY_ZERNIO_API_URL = previousUrl
     process.env.PATH = previousPath
     await mock.close()
     cleanup()
@@ -77,7 +77,7 @@ test('the post attempt journal ignores a planted temp-path symlink and is writte
 // ZER-2: a transcript can be prompt-injected. The generated caption is the
 // one field that reaches the post, so links must not slip in without a scheme.
 test('AI captions are refused when they carry a clickable link, with or without a scheme', () => {
-  const { dir, cleanup } = tempDir('bridgeclip-audit-metadata-')
+  const { dir, cleanup } = tempDir('reelferry-audit-metadata-')
   try {
     const { electron } = fakeElectron(dir)
     const { parseGeneratedMetadata } = loadMain("export { parseGeneratedMetadata } from './src/main/automation-metadata'", { electron })
@@ -98,7 +98,7 @@ test('AI captions are refused when they carry a clickable link, with or without 
 })
 
 test('metadata validation bounds repetitive provider evidence and caption parsing', () => {
-  const { dir, cleanup } = tempDir('bridgeclip-audit-evidence-')
+  const { dir, cleanup } = tempDir('reelferry-audit-evidence-')
   try {
     const { electron } = fakeElectron(dir)
     const { evidenceInTranscript, parseGeneratedMetadata } = loadMain("export { evidenceInTranscript, parseGeneratedMetadata } from './src/main/automation-metadata'", { electron })

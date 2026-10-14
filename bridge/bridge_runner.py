@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-BridgeClip Bridge Runner
+Reelferry Bridge Runner
 
-Thin bridge between Electron and BridgeClip clipping engine.
+Thin bridge between Electron and Reelferry clipping engine.
 Accepts a JSON config on stdin, runs the pipeline in LOCAL_MODE,
 and streams structured JSON-line progress to stdout for Electron to consume.
 
@@ -79,10 +79,10 @@ FAILURES = (
      "OpenRouter returned an unusable transcription response.",
      "Retry the run. If it persists, report this run so the provider response can be investigated."),
     (("audio extraction failed", "audio duration could not be determined", "transcription audio preparation failed"),
-     "BridgeClip could not prepare this video's audio for transcription.",
+     "Reelferry could not prepare this video's audio for transcription.",
      "Run Settings → System check. If the tools are ready, report this run with its failure code."),
     (("transcription audio chunk exceeded the size limit",),
-     "The transcription audio exceeded BridgeClip's size limit.",
+     "The transcription audio exceeded Reelferry's size limit.",
      "Set a shorter start and end time, or report this run so the chunk size can be adjusted."),
     (("transcription failed",),
      "Audio transcription failed.",
@@ -92,12 +92,12 @@ FAILURES = (
      "Run Settings → System check. If all tools are ready, report this run so the render can be diagnosed."),
     (("http error 403", "sign in to confirm", "blocking this request"),
      "The video service refused the download.",
-     "Update BridgeClip and retry. If it keeps happening, download the video yourself and clip it as a local file."),
+     "Update Reelferry and retry. If it keeps happening, download the video yourself and clip it as a local file."),
     (("video unavailable", "private video", "members-only", "has been removed", "not available in your country"),
      "This video is private, removed or unavailable in your region.",
      "Check the link opens in a signed-out browser window, or clip a local file instead."),
     (("exceeds maximum allowed duration",),
-     "This video is longer than BridgeClip can process.",
+     "This video is longer than Reelferry can process.",
      "Choose a shorter source video, or trim a downloaded file before adding it."),
     (("playlist or channel",),
      "This link is a playlist or channel, not a single video.",
@@ -106,7 +106,7 @@ FAILURES = (
      "This video is live or not yet available.",
      "Wait until the stream has ended and the saved video is ready, then retry."),
     (("no clip-worthy moments",),
-     "BridgeClip couldn't find any clips in this video.",
+     "Reelferry couldn't find any clips in this video.",
      "No clear spoken or visual moment met the selected clip length. If you set a start and end time, widen it or pick a shorter clip length."),
     (("out of credits", "quota exceeded"),
      "Your OpenRouter key is out of credits.",
@@ -166,11 +166,11 @@ def progress_callback(progress) -> None:
 async def run(config: dict) -> bool:
     """Run the clipping pipeline with the given config."""
     config = validate_config(config)
-    # Configure before BridgeClip imports: settings are cached by the engine.
+    # Configure before Reelferry imports: settings are cached by the engine.
     os.environ["LOCAL_MODE"] = "true"
     if config.get("output_dir"):
         os.environ["LOCAL_OUTPUT_DIR"] = config["output_dir"]
-    # Downloads use the user's own connection. A developer's BridgeClip .env can
+    # Downloads use the user's own connection. A developer's Reelferry .env can
     # hold the server's proxy pool, and environment variables beat .env values.
     os.environ["YTDLP_PROXIES"] = ""
     os.environ["YTDLP_PROXY"] = ""
@@ -203,7 +203,7 @@ async def run(config: dict) -> bool:
 
     from clip_engine.bridge_contract import BRIDGE_CONTRACT_VERSION
     if config["contract_version"] != BRIDGE_CONTRACT_VERSION:
-        emit({"type": "error", "message": "The bundled clipping engine is incompatible with this BridgeClip version."})
+        emit({"type": "error", "message": "The bundled clipping engine is incompatible with this Reelferry version."})
         return False
 
     from clip_engine.config import get_settings, get_caption_preset

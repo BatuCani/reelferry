@@ -15,7 +15,7 @@ test('rejects inconsistent or overlapping release artifacts', () => {
   assert.throws(() => mergeMetadata([metadata('arm64'), metadata('arm64')]))
 })
 test('checks archive bytes against update metadata before publishing', async (t) => {
-  const dir = mkdtempSync(join(tmpdir(), 'bridgeclip-update-'))
+  const dir = mkdtempSync(join(tmpdir(), 'reelferry-update-'))
   try {
     const archive = Buffer.from('test archive')
     const digest = createHash('sha512').update(archive).digest('base64')

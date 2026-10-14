@@ -44,7 +44,7 @@ test('provider redirects cannot forward audio, custom API keys, or transcripts',
   let leaked = 0
   const sink = await server((req, res) => { leaked++; req.resume(); res.end('{}') })
   const redirect = await server((req, res) => { req.resume(); res.writeHead(307, { Location: `${sink.url}/capture` }); res.end() })
-  const names = ['BRIDGECLIP_E2E_TRANSCRIPTION_URL', 'BRIDGECLIP_E2E_OPENROUTER_URL']
+  const names = ['REELFERRY_E2E_TRANSCRIPTION_URL', 'REELFERRY_E2E_OPENROUTER_URL']
   const previous = names.map((name) => process.env[name])
   try {
     for (const name of names) process.env[name] = redirect.url

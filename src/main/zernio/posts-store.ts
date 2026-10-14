@@ -5,7 +5,7 @@ import { isZernioId } from '../../shared/zernio'
 import type { PostRecord, PostRecordTarget, PostStatus, PostTargetStatus } from '../../shared/zernio-posts'
 import { quarantineUnbound, readableCache } from './workspace-cache'
 
-// Local history of posts made from BridgeClip, so the Accounts page can show
+// Local history of posts made from Reelferry, so the Accounts page can show
 // scheduled and recent posts without listing the whole Zernio workspace.
 // Holds ids, paths, titles and statuses: nothing secret.
 

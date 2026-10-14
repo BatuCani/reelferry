@@ -272,29 +272,29 @@ export function preflightCheck(paths: {
 }): PreflightResult {
   if (app.isPackaged) {
     const missing = (['ffmpeg', 'ffprobe', 'yt-dlp'] as const).find((name) => !existsSync(resolveBinary(name)))
-    if (missing) return { ok: false, error: `Bundled ${missing} is missing.`, hint: 'Reinstall BridgeClip to repair the clipping tools.' }
+    if (missing) return { ok: false, error: `Bundled ${missing} is missing.`, hint: 'Reinstall Reelferry to repair the clipping tools.' }
   }
   if (!existsSync(paths.bridgePath)) {
     return {
       ok: false,
       error: `Bridge runner script not found at: ${paths.bridgePath}`,
       hint: app.isPackaged
-        ? 'This is a BridgeClip packaging bug — bridge_runner.py is missing from the app bundle. Please reinstall or report this issue.'
+        ? 'This is a Reelferry packaging bug — bridge_runner.py is missing from the app bundle. Please reinstall or report this issue.'
         : 'Expected to find bridge/bridge_runner.py in the repo. Did you delete it?'
     }
   }
   if (!paths.enginePath || !existsSync(paths.enginePath)) {
     return {
       ok: false,
-      error: `BridgeClip clipping engine not found at: ${paths.enginePath}`,
-      hint: 'Reinstall BridgeClip or restore the engine/ directory in your source checkout.'
+      error: `Reelferry clipping engine not found at: ${paths.enginePath}`,
+      hint: 'Reinstall Reelferry or restore the engine/ directory in your source checkout.'
     }
   }
   if (!existsSync(join(paths.enginePath, 'clip_engine', 'bridge_contract.py'))) {
     return {
       ok: false,
-      error: `BridgeClip clipping engine is incomplete at: ${paths.enginePath}`,
-      hint: 'Reinstall BridgeClip or restore engine/clip_engine/bridge_contract.py in your source checkout.'
+      error: `Reelferry clipping engine is incomplete at: ${paths.enginePath}`,
+      hint: 'Reinstall Reelferry or restore engine/clip_engine/bridge_contract.py in your source checkout.'
     }
   }
   // For absolute python paths, verify existence up-front. For bare commands
@@ -419,7 +419,7 @@ export function startClipJob(
   let jobWorkRoot: string
   try { jobWorkRoot = workRoot() }
   catch {
-    reportError({ jobId, message: 'BridgeClip could not create a private temporary work folder.' })
+    reportError({ jobId, message: 'Reelferry could not create a private temporary work folder.' })
     exitWithoutProcess()
     return
   }
@@ -428,7 +428,7 @@ export function startClipJob(
     ...runtimeEnvironment(),
     ...envVars,
     PYTHONPATH: enginePath,
-    BRIDGECLIP_WORK_ROOT: jobWorkRoot,
+    REELFERRY_WORK_ROOT: jobWorkRoot,
     PYTHONUNBUFFERED: '1',
     PYTHONDONTWRITEBYTECODE: '1'
   }

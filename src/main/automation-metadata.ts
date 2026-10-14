@@ -32,7 +32,7 @@ function youtubeTagsLength(tags: string[]): number {
   return tags.reduce((length, tag, index) => length + [...tag].length + (/\s/.test(tag) ? 2 : 0) + (index > 0 ? 1 : 0), 0)
 }
 
-function endpoint(name: 'BRIDGECLIP_E2E_TRANSCRIPTION_URL' | 'BRIDGECLIP_E2E_OPENROUTER_URL', production: string): string {
+function endpoint(name: 'REELFERRY_E2E_TRANSCRIPTION_URL' | 'REELFERRY_E2E_OPENROUTER_URL', production: string): string {
   return app.isPackaged ? production : process.env[name] || production
 }
 
@@ -58,7 +58,7 @@ export async function transcribeAutomationClip(path: string): Promise<string> {
   const settings = loadSettings()
   const key = settings.openrouterApiKey
   if (!key) throw new Error('Add an OpenRouter API key in Settings to transcribe automation clips.')
-  const directory = await mkdtemp(join(tmpdir(), 'bridgeclip-transcript-'))
+  const directory = await mkdtemp(join(tmpdir(), 'reelferry-transcript-'))
   try {
     // Bound each request rather than sending an entire long recording to STT.
     await execFileAsync(resolveBinary('ffmpeg'), [
@@ -76,7 +76,7 @@ export async function transcribeAutomationClip(path: string): Promise<string> {
     let transcript = ''
     for (const file of files) {
       const bytes = await readFile(join(directory, file))
-      const result = await providerResponse(await fetch(endpoint('BRIDGECLIP_E2E_TRANSCRIPTION_URL', 'https://openrouter.ai/api/v1/audio/transcriptions'), {
+      const result = await providerResponse(await fetch(endpoint('REELFERRY_E2E_TRANSCRIPTION_URL', 'https://openrouter.ai/api/v1/audio/transcriptions'), {
         method: 'POST',
         headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -222,8 +222,8 @@ export async function generateAutomationMetadata(transcript: string, title: stri
   let validationFeedback: string | null = null
   for (let attempt = 0; attempt < 2; attempt++) {
     let response: Record<string, unknown>
-    try { response = await providerResponse(await fetch(endpoint('BRIDGECLIP_E2E_OPENROUTER_URL', 'https://openrouter.ai/api/v1/chat/completions'), {
-      method: 'POST', headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json', 'HTTP-Referer': 'https://github.com/bridge-mind/bridgeclip', 'X-Title': 'BridgeClip' },
+    try { response = await providerResponse(await fetch(endpoint('REELFERRY_E2E_OPENROUTER_URL', 'https://openrouter.ai/api/v1/chat/completions'), {
+      method: 'POST', headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json', 'HTTP-Referer': 'https://github.com/BatuCani/reelferry', 'X-Title': 'Reelferry' },
       redirect: 'error',
       signal: AbortSignal.timeout(120_000),
       body: JSON.stringify({ model: MODEL, messages: [

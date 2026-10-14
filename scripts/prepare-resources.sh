@@ -22,7 +22,7 @@ if [[ ( "$target_arch" == "arm64" && "$host_arch" != "arm64" ) ||
 fi
 if [[ ! -f engine/clip_engine/bridge_contract.py || ! -f engine/requirements.lock ||
       ! -f engine/LICENSE || ! -d engine/assets ]]; then
-  echo "The in-repo BridgeClip clipping engine is incomplete" >&2
+  echo "The in-repo Reelferry clipping engine is incomplete" >&2
   exit 1
 fi
 
@@ -37,8 +37,8 @@ else
   pbs_hash="65b195c9cedc1fef6767f044f9822069adbd1bd9204d424ece4628776fdc04bb"
 fi
 
-archive="$(mktemp -t bridgeclip-python).tar.gz"
-work_dir="$(mktemp -d -t bridgeclip-resources)"
+archive="$(mktemp -t reelferry-python).tar.gz"
+work_dir="$(mktemp -d -t reelferry-resources)"
 trap 'rm -f "$archive"; rm -rf "$work_dir"' EXIT
 pbs_url="https://github.com/astral-sh/python-build-standalone/releases/download/20260901/cpython-3.12.14+20260901-${pbs_arch}-apple-darwin-install_only_stripped.tar.gz"
 curl --fail --show-error --location --retry 3 "$pbs_url" -o "$archive"

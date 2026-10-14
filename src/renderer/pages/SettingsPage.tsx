@@ -4,10 +4,10 @@ import { useSettingsStore } from '../store/use-settings-store'
 import { useApiKeyDrafts } from '../hooks/use-api-key-drafts'
 import { getApi } from '../lib/ipc'
 import { cn, errorMessage } from '../lib/utils'
-import { APP_NAME, APP_VERSION, BRIDGEMIND_URL, ISSUES_URL, LICENSE_NAME, PROVIDER_LINKS, REPO_URL } from '../config/brand'
+import { APP_NAME, APP_VERSION, BRIDGECLIP_URL, ISSUES_URL, LICENSE_NAME, PROVIDER_LINKS, REPO_URL } from '../config/brand'
 import type { ClipSettings, ToolStatus } from '../../preload/index'
 import { ApiKeyInput } from '../components/ApiKeyInput'
-import { BridgeClipLogo } from '../components/brand/BridgeClipLogo'
+import { ReelferryLogo } from '../components/brand/ReelferryLogo'
 import { Page } from '../components/ui/Page'
 import { PageHeader } from '../components/ui/PageHeader'
 import { Panel, PanelHeader } from '../components/ui/Panel'
@@ -138,7 +138,7 @@ export function SettingsPage({ showUpdates = 0 }: { showUpdates?: number }): Rea
             <PanelHeader
               icon={<IconTile tone="accent"><KeyRound /></IconTile>}
               title="API keys"
-              description="Encrypted with your system keychain. BridgeClip has no account and no server of its own."
+              description="Encrypted with your system keychain. Reelferry has no account and no server of its own."
             />
             <div className="mt-4 space-y-2">
               <KeyRow>
@@ -194,7 +194,7 @@ export function SettingsPage({ showUpdates = 0 }: { showUpdates?: number }): Rea
             <PanelHeader
               icon={<IconTile tone={toolsChecked && toolsMissing ? 'danger' : 'neutral'}><Cpu /></IconTile>}
               title="System check"
-              description="Tools BridgeClip needs to download, transcribe and cut video."
+              description="Tools Reelferry needs to download, transcribe and cut video."
               action={
                 <Button
                   size="sm"
@@ -222,21 +222,21 @@ export function SettingsPage({ showUpdates = 0 }: { showUpdates?: number }): Rea
 
           <Section id="about" className="overflow-hidden">
             <div className="flex flex-wrap items-center gap-4">
-              <BridgeClipLogo variant="icon" className="-m-1 h-12" />
+              <ReelferryLogo variant="icon" className="-m-1 h-12" />
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2.5">
                   <h2 className="text-base font-semibold tracking-[-0.01em] text-ink">{APP_NAME}</h2>
                   <Badge className="font-mono tabular">v{APP_VERSION}</Badge>
                 </div>
                 <p className="mt-1 text-xs leading-relaxed text-ink-muted">
-                  Released under the {LICENSE_NAME} license. Built by{' '}
+                  Released under the {LICENSE_NAME} license. Based on{' '}
                   <button
-                    onClick={() => getApi().shell.openPath(BRIDGEMIND_URL)}
+                    onClick={() => getApi().shell.openPath(BRIDGECLIP_URL)}
                     className="text-ink underline decoration-white/25 underline-offset-2 transition-colors hover:decoration-ink"
                   >
-                    BridgeMind
+                    BridgeClip
                   </button>
-                  .
+                  {' '}by BridgeMind (MIT).
                 </p>
               </div>
               <div className="flex flex-wrap gap-1.5">
@@ -411,7 +411,7 @@ function VocabularyField({ value, onCommit }: { value: string; onCommit: (value:
       <TextArea
         rows={4}
         value={draft}
-        placeholder={'GPT 6 Sol\nOpus 5.5\nBridgeMind'}
+        placeholder={'GPT 6 Sol\nOpus 5.5\nReelferry'}
         aria-label="Custom vocabulary"
         onChange={(e) => setDraft(e.target.value)}
         onBlur={() => draft !== value && onCommit(draft)}
@@ -467,7 +467,7 @@ function toolRows(status: ToolStatus | null): ToolRow[] {
     },
     { name: 'FFprobe', ok: status?.ffprobe ?? null },
     { name: 'yt-dlp', ok: status?.ytdlp ?? null, detail: 'Downloads YouTube videos and Twitch VODs' },
-    { name: 'BridgeClip clipping engine', ok: status?.engine ?? null, detail: status?.enginePath },
+    { name: 'Reelferry clipping engine', ok: status?.engine ?? null, detail: status?.enginePath },
     { name: 'Bridge runner', ok: status?.bridgeRunner ?? null, detail: status?.bridgePath }
   ]
 }
@@ -484,7 +484,7 @@ function ToolList({ rows, checking }: { rows: ToolRow[]; checking: boolean }): R
         <div className="mb-3 flex items-center gap-2 px-1 text-xs">
           <StatusDot tone={missing > 0 ? 'danger' : 'success'} />
           <span className={cn('flex-1', missing > 0 ? 'text-danger' : 'text-ink-muted')}>
-            {missing > 0 ? `${missing} required tool${missing === 1 ? '' : 's'} missing` : `Everything BridgeClip needs is installed (${rows.filter((row) => row.ok).length} tools)`}
+            {missing > 0 ? `${missing} required tool${missing === 1 ? '' : 's'} missing` : `Everything Reelferry needs is installed (${rows.filter((row) => row.ok).length} tools)`}
           </span>
           {missing === 0 && (
             <Button

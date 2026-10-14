@@ -73,7 +73,7 @@ export function AddToAutomationDialog({ outputDir, clipIndices, onClose, onAdded
     setBusy(true); setError(null)
     try {
       await getApi().automations.addLibraryClips(selected.id, outputDir, clipIndices)
-      try { sessionStorage.setItem('bridgeclip.automations.selectedId', selected.id) } catch { /* Optional selection memory. */ }
+      try { sessionStorage.setItem('reelferry.automations.selectedId', selected.id) } catch { /* Optional selection memory. */ }
       onAdded(selected.name, selected.id)
     } catch (cause) { setError(errorMessage(cause, 'Could not add clips to the content bank.')) }
     finally { setBusy(false) }

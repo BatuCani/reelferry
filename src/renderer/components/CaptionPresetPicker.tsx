@@ -5,7 +5,7 @@ import { cn } from '../lib/utils'
 /**
  * Mirrors the caption presets in engine/clip_engine/config.py closely
  * enough to preview them: typeface, colours, stroke, shadow, glow, pill,
- * plate and karaoke sweep. BridgeClip engine renders with its bundled fonts; the preview
+ * plate and karaoke sweep. Reelferry engine renders with its bundled fonts; the preview
  * asks for the same family and falls back to a close system face.
  */
 interface CaptionPreset {

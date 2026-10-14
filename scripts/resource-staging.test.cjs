@@ -7,7 +7,7 @@ const path = require('node:path')
 const { spawnSync } = require('node:child_process')
 
 test('resource staging preserves existing tools when the in-repo engine is incomplete', { skip: process.platform !== 'darwin' }, () => {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'bridgeclip-stage-'))
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'reelferry-stage-'))
   try {
     const scripts = path.join(dir, 'scripts')
     fs.mkdirSync(scripts)
@@ -17,7 +17,7 @@ test('resource staging preserves existing tools when the in-repo engine is incom
     fs.writeFileSync(sentinel, 'keep')
     const result = spawnSync('bash', [path.join(scripts, 'prepare-resources.sh'), process.arch === 'arm64' ? 'arm64' : 'x64'], { encoding: 'utf8' })
     assert.notEqual(result.status, 0)
-    assert.match(result.stderr, /in-repo BridgeClip clipping engine is incomplete/)
+    assert.match(result.stderr, /in-repo Reelferry clipping engine is incomplete/)
     assert.equal(fs.readFileSync(sentinel, 'utf8'), 'keep')
   } finally { fs.rmSync(dir, { recursive: true, force: true }) }
 })

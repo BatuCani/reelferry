@@ -30,7 +30,7 @@ test('cost is credits at the Pro list price, and the saving is a whole percent',
   assert.equal(opusClipCostUsd(22 * 60 + 53).toFixed(2), '2.13', '22 × $29/300')
   assert.equal(opusClipCostUsd(0), null)
   assert.equal(percentLessThanOpusClip(0.12, 22 * 60 + 53), 94)
-  assert.equal(percentLessThanOpusClip(2.13, 22 * 60 + 53), null, 'no claim when BridgeClip costs as much or more')
+  assert.equal(percentLessThanOpusClip(2.13, 22 * 60 + 53), null, 'no claim when Reelferry costs as much or more')
   assert.equal(percentLessThanOpusClip(5, 22 * 60), null)
   assert.equal(percentLessThanOpusClip(Number.NaN, 22 * 60), null)
 })

@@ -28,8 +28,8 @@ let mainWindow: BrowserWindow | null = null
 
 // Development-only: isolated settings (and single-instance lock) for
 // end-to-end tests, so a test run never touches the developer's real app.
-if (!app.isPackaged && process.env.BRIDGECLIP_USER_DATA_DIR) {
-  const isolated = process.env.BRIDGECLIP_USER_DATA_DIR
+if (!app.isPackaged && process.env.REELFERRY_USER_DATA_DIR) {
+  const isolated = process.env.REELFERRY_USER_DATA_DIR
   app.setPath('userData', isolated)
   // Settings migrate (and then delete) pre-rename files found under appData
   // and home, and logs default to the real app's file: point all of those
@@ -44,7 +44,7 @@ if (!app.isPackaged && process.env.BRIDGECLIP_USER_DATA_DIR) {
 
 // Development-only: scripted end-to-end runs keep the window hidden and out
 // of the Dock, so a test run never takes over the developer's screen.
-const hiddenForTests = !app.isPackaged && process.env.BRIDGECLIP_E2E === '1'
+const hiddenForTests = !app.isPackaged && process.env.REELFERRY_E2E === '1'
 if (hiddenForTests) {
   // Nor may it open the developer's real browser from any link.
   shell.openExternal = async (url: string): Promise<void> => {
@@ -82,7 +82,7 @@ function createWindow(): void {
     minWidth: 720,
     minHeight: 520,
     show: false,
-    title: 'BridgeClip',
+    title: 'Reelferry',
     icon: is.dev ? devIcon : undefined,
     // macOS-only window chrome: 'hiddenInset' and trafficLightPosition are
     // ignored on other platforms, so only pass them on darwin.
@@ -140,7 +140,7 @@ protocol.registerSchemesAsPrivileged([
 
 app.whenReady().then(() => {
   cleanStaleWorkspaces()
-  electronApp.setAppUserModelId('com.bridgemind.bridgeclip')
+  electronApp.setAppUserModelId('io.github.batucani.reelferry')
   if (hiddenForTests) app.dock?.hide()
   else if (is.dev) app.dock?.setIcon(devIcon)
 

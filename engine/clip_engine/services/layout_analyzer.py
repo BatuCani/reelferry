@@ -1014,8 +1014,8 @@ class LayoutAnalyzer:
                 timeout=httpx.Timeout(120.0, connect=20.0),
                 headers={
                     "Authorization": f"Bearer {self.settings.openrouter_api_key}",
-                    "HTTP-Referer": "https://github.com/bridge-mind/bridgeclip",
-                    "X-Title": "BridgeClip AI Clipping Agent",
+                    "HTTP-Referer": "https://github.com/BatuCani/reelferry",
+                    "X-Title": "Reelferry AI Clipping Agent",
                 },
             )
         return self._http_client

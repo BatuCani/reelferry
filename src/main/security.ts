@@ -2,7 +2,7 @@ import { BrowserWindow, type IpcMainInvokeEvent } from 'electron'
 import { constants, realpathSync, statSync } from 'fs'
 import { open, type FileHandle } from 'fs/promises'
 import { extname, isAbsolute, relative, resolve, sep } from 'path'
-import { BRIDGEMIND_URL, DISCORD_URL, ISSUES_URL, PROVIDER_LINKS, REPO_URL, ZERNIO_LINKS } from '../shared/brand'
+import { BRIDGECLIP_URL, ISSUES_URL, PROVIDER_LINKS, REPO_URL, ZERNIO_LINKS } from '../shared/brand'
 
 export function assertTrustedSender(event: IpcMainInvokeEvent, window: BrowserWindow | null): void {
   if (!window || window.isDestroyed() || event.sender !== window.webContents ||
@@ -19,7 +19,7 @@ export function isWebUrl(value: unknown): value is string {
   } catch { return false }
 }
 
-const externalLinks = new Set([BRIDGEMIND_URL, DISCORD_URL, ISSUES_URL, REPO_URL, ...Object.values(PROVIDER_LINKS), ...Object.values(ZERNIO_LINKS)])
+const externalLinks = new Set([BRIDGECLIP_URL, ISSUES_URL, REPO_URL, ...Object.values(PROVIDER_LINKS), ...Object.values(ZERNIO_LINKS)])
 export function isTrustedExternalUrl(value: unknown): value is string {
   return isWebUrl(value) && externalLinks.has(value)
 }

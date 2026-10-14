@@ -6,7 +6,7 @@ const path = require('node:path')
 const { buildApp, launchApp } = require('../zernio/support/electron-app.cjs')
 
 test('Advanced models and export speed support keyboard selection, review and submission in Electron', { timeout: 90000 }, async (t) => {
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'bridgeclip-models-e2e-'))
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'reelferry-models-e2e-'))
   const appDir = buildApp(path.join(root, 'app'))
   const session = await launchApp({ appDir, userDataDir: path.join(root, 'user-data') })
   t.after(async () => { await session.close(); fs.rmSync(root, { recursive: true, force: true }) })
@@ -48,7 +48,7 @@ test('Advanced models and export speed support keyboard selection, review and su
   await page.keyboard.press('ArrowRight')
   await page.keyboard.press('ArrowRight')
   assert.equal(await speeds.getByRole('radio', { name: '1.5×', exact: true }).getAttribute('aria-checked'), 'true')
-  const artifacts = process.env.BRIDGECLIP_E2E_SHOTS
+  const artifacts = process.env.REELFERRY_E2E_SHOTS
   if (artifacts) {
     fs.mkdirSync(artifacts, { recursive: true })
     await page.screenshot({ path: path.join(artifacts, 'advanced-video-speed.png') })

@@ -7,7 +7,7 @@ import { logger } from '../logger'
 
 const BASE_URL = 'https://zernio.com/api/v1'
 const REQUEST_TIMEOUT_MS = 30_000
-/** Longest wait BridgeClip honours from Retry-After or X-RateLimit-Reset. */
+/** Longest wait Reelferry honours from Retry-After or X-RateLimit-Reset. */
 const MAX_RATE_LIMIT_WAIT_S = 3600
 
 type JsonRecord = Record<string, unknown>
@@ -179,16 +179,16 @@ function errorFor(status: number, body: JsonRecord, headers: Headers | string | 
   if (status === 402) return new ZernioApiError(paymentMessage(str(body.reason)), status, code ?? 'PAYMENT_REQUIRED')
   if (status === 403) {
     if (/this api key does not have access to this profile/i.test(String(body.error ?? body.message ?? '')) || code === 'profile_access_denied') {
-      return new ZernioApiError("This Zernio API key cannot access this profile. In Zernio's API keys, use a key with access to this profile, or Full access for new profiles, and Read & Write permission. Update the key in BridgeClip Settings.", status, 'profile_access_denied')
+      return new ZernioApiError("This Zernio API key cannot access this profile. In Zernio's API keys, use a key with access to this profile, or Full access for new profiles, and Read & Write permission. Update the key in Reelferry Settings.", status, 'profile_access_denied')
     }
     if (code === 'PLATFORM_BETA_RESTRICTED') return new ZernioApiError("This platform is in a closed beta on Zernio and isn't enabled for your workspace yet.", status, code)
     if (code === 'PLATFORM_DISABLED') return new ZernioApiError('Zernio has temporarily disabled this platform. Try again later.', status, code)
     if (code === 'PROFILE_OVER_LIMIT') return new ZernioApiError("This Zernio profile is over your plan's limit. Pick another profile or upgrade in Zernio.", status, code)
     if (code === 'ACCOUNT_DISCONNECTED') return new ZernioApiError('That account needs to sign in again. Reconnect it on the Accounts page.', status, code)
-    if (code === 'insufficient_permissions') return new ZernioApiError("This Zernio API key isn't allowed to do that. Check its profile access, Read & Write permission, and enabled resources in Zernio, then update the key in BridgeClip Settings.", status, code)
+    if (code === 'insufficient_permissions') return new ZernioApiError("This Zernio API key isn't allowed to do that. Check its profile access, Read & Write permission, and enabled resources in Zernio, then update the key in Reelferry Settings.", status, code)
   }
   if (status === 400 && code === 'INVALID_REDIRECT_URL') {
-    return new ZernioApiError("Zernio didn't accept BridgeClip's local sign-in return address. Please report this issue.", status, code)
+    return new ZernioApiError("Zernio didn't accept Reelferry's local sign-in return address. Please report this issue.", status, code)
   }
   if (status === 409 && code === 'ads_connection_required') {
     return new ZernioApiError('That account needs to sign in again. Reconnect it on the Accounts page.', status, code)

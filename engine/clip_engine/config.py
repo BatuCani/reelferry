@@ -577,7 +577,7 @@ class Settings(BaseSettings):
     # ============================================================
 
     # Application
-    app_name: str = "BridgeClip"
+    app_name: str = "Reelferry"
     debug: bool = False
     log_level: str = "INFO"
 
@@ -585,16 +585,16 @@ class Settings(BaseSettings):
     aws_region: str = "us-east-1"
     aws_access_key_id: Optional[str] = None
     aws_secret_access_key: Optional[str] = None
-    s3_bucket: str = "bridgeclip-media"
+    s3_bucket: str = "reelferry-media"
 
     # API Keys (required)
     openrouter_api_key: Optional[str] = None
 
     # Security - API authentication
-    bridgeclip_api_key: Optional[str] = None  # API key for authenticating incoming requests
-    bridgeclip_cors_origins: str = ""  # Comma-separated browser origins; empty disables CORS
-    bridgeclip_webhook_allowed_hosts: str = ""  # Exact HTTPS hostnames; empty disables callbacks
-    bridgeclip_webhook_secret: Optional[str] = None  # Secret for signing outgoing webhooks
+    reelferry_api_key: Optional[str] = None  # API key for authenticating incoming requests
+    reelferry_cors_origins: str = ""  # Comma-separated browser origins; empty disables CORS
+    reelferry_webhook_allowed_hosts: str = ""  # Exact HTTPS hostnames; empty disables callbacks
+    reelferry_webhook_secret: Optional[str] = None  # Secret for signing outgoing webhooks
 
     # Local mode - skip S3 uploads, save clips to local_output_dir instead
     local_mode: bool = False
@@ -740,7 +740,7 @@ class Settings(BaseSettings):
 
     @property
     def temp_directory(self) -> str:
-        return os.environ["BRIDGECLIP_WORK_ROOT"]
+        return os.environ["REELFERRY_WORK_ROOT"]
 
     @property
     def workspace_root(self) -> str:

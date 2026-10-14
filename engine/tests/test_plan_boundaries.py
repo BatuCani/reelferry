@@ -79,7 +79,7 @@ def sentence_ends(transcript):
 
 class TestDurationBounds:
     def test_ranges_win_over_explicit_bounds(self):
-        # BridgeClip used to leave the 15/90 defaults next to its ranges.
+        # Reelferry used to leave the 15/90 defaults next to its ranges.
         assert resolve_clip_duration_bounds(["long"], 15, 90) == (120, 300)
 
     def test_multiple_ranges_span_their_union(self):

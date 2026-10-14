@@ -1,3 +1,3 @@
-"""Compatibility version for the BridgeClip desktop client and BridgeClip engine."""
+"""Compatibility version for the Reelferry desktop client and Reelferry engine."""
 
 BRIDGE_CONTRACT_VERSION = 2

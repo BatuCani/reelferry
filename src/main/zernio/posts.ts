@@ -287,7 +287,7 @@ function outcomeOf(record: PostRecord, created: CreatedPost, request: PostClipRe
     case 'scheduled':
       if (created.httpStatus === 207) return { outcome: 'retrying', message: 'Zernio hit a temporary problem and will retry automatically.' }
       if (request.timing.mode === 'now') return { outcome: 'publishing', message: 'Zernio queued the post and will publish it shortly.' }
-      return { outcome: 'scheduled', message: 'Zernio publishes it even when BridgeClip is closed.' }
+      return { outcome: 'scheduled', message: 'Zernio publishes it even when Reelferry is closed.' }
     default:
       return { outcome: 'publishing', message: 'Zernio is still publishing. Check Posts on the Accounts page for the result.' }
   }

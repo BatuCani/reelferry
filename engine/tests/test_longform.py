@@ -268,7 +268,7 @@ class TestRendering:
 
 
 # The render needs libass (burned captions). TEST_FFMPEG_DIR points at a
-# directory holding ffmpeg + ffprobe, e.g. BridgeClip's bundled engine-bin.
+# directory holding ffmpeg + ffprobe, e.g. Reelferry's bundled engine-bin.
 TEST_FFMPEG_DIR = os.environ.get("TEST_FFMPEG_DIR") or os.path.dirname(shutil.which("ffmpeg") or "")
 
 

@@ -21,7 +21,7 @@ function loadShared(file) {
   vm.runInNewContext(js, { module, exports: module.exports, require, URL })
   return module.exports
 }
-const TEST_WORK_HOME = fs.mkdtempSync(path.join(os.tmpdir(), 'bridgeclip-worker-test-'))
+const TEST_WORK_HOME = fs.mkdtempSync(path.join(os.tmpdir(), 'reelferry-worker-test-'))
 process.on('exit', () => fs.rmSync(TEST_WORK_HOME, { recursive: true, force: true }))
 const jobContract = loadShared('job-contract.ts')
 const jobOutput = loadShared('job-output.ts')
@@ -77,7 +77,7 @@ test('Zernio sign-in links stay on its HTTPS origin and provider errors are sani
 })
 
 test('media authorization rejects traversal, symlink escapes, and non-media files', (t) => {
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'bridgeclip-test-'))
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'reelferry-test-'))
   try {
     const library = path.join(root, 'library')
     fs.mkdirSync(library)
@@ -103,7 +103,7 @@ test('media authorization rejects traversal, symlink escapes, and non-media file
 })
 
 test('validated media handle keeps the authorized file after its pathname changes', { skip: !fileLinksAvailable }, async () => {
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'bridgeclip-media-handle-'))
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'reelferry-media-handle-'))
   try {
     const library = path.join(root, 'library')
     fs.mkdirSync(library)
@@ -122,7 +122,7 @@ test('validated media handle keeps the authorized file after its pathname change
 })
 
 test('thumbnail generation uses a private cache and does not follow an adjacent symlink', { skip: !fileLinksAvailable }, async () => {
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'bridgeclip-thumb-'))
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'reelferry-thumb-'))
   try {
     const video = path.join(root, 'clip.mp4')
     const adjacent = path.join(root, 'clip_thumb.jpg')
@@ -161,7 +161,7 @@ test('IPC authentication requires the registered window main frame', () => {
 })
 
 test('the native picker authorizes media and shell opening rejects aliased application bundles', async (t) => {
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'bridgeclip-picker-'))
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'reelferry-picker-'))
   try {
     const library = path.join(root, 'library')
     fs.mkdirSync(library)
@@ -214,7 +214,7 @@ test('external URLs reject executable schemes and embedded credentials', () => {
   for (const url of ['file:///tmp/run', 'javascript:alert(1)', 'https://user:pass@example.com', null]) assert.equal(security.isWebUrl(url), false)
   assert.equal(security.isWebUrl('https://example.com/video'), true)
   assert.equal(security.isTrustedExternalUrl('https://example.com/video'), false)
-  assert.equal(security.isTrustedExternalUrl('https://github.com/bridge-mind/bridgeclip'), true)
+  assert.equal(security.isTrustedExternalUrl('https://github.com/BatuCani/reelferry'), true)
 })
 
 test('job validation rejects malformed options and invalid trim intervals', () => {
@@ -240,7 +240,7 @@ test('job validation rejects malformed options and invalid trim intervals', () =
 })
 
 test('saved provider keys remain in main and migrate away from legacy encoding', () => {
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'bridgeclip-settings-'))
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'reelferry-settings-'))
   const userData = path.join(root, 'userdata')
   const file = path.join(userData, 'settings.json')
   fs.mkdirSync(userData)
@@ -269,7 +269,7 @@ test('saved provider keys remain in main and migrate away from legacy encoding',
 })
 
 test('settings migration retires ElevenLabs without decrypting it and preserves the OpenRouter key', () => {
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'bridgeclip-single-key-'))
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'reelferry-single-key-'))
   const userData = path.join(root, 'userdata')
   fs.mkdirSync(userData)
   const file = path.join(userData, 'settings.json')
@@ -294,7 +294,7 @@ test('settings migration retires ElevenLabs without decrypting it and preserves 
 })
 
 test('settings migration writes a private file', () => {
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'bridgeclip-settings-private-'))
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'reelferry-settings-private-'))
   const userData = path.join(root, 'userdata')
   fs.mkdirSync(userData)
   fs.writeFileSync(path.join(userData, 'settings.json'), JSON.stringify({ openrouterApiKey: Buffer.from('old-key').toString('base64'), outputDirectory: root }), { mode: 0o666 })
@@ -317,9 +317,9 @@ test('Windows resolves the saved legacy Python default without replacing an inst
   const winProcess = Object.create(process)
   Object.defineProperty(winProcess, 'platform', { value: 'win32' })
   Object.defineProperty(winProcess, 'env', { value: { PATH: 'C:\\Python;C:\\Windows' } })
-  Object.defineProperty(winProcess, 'resourcesPath', { value: 'C:\\BridgeClip\\resources' })
-  const userData = 'C:\\Users\\Test\\BridgeClip'
-  const engine = 'C:\\BridgeClip\\engine'
+  Object.defineProperty(winProcess, 'resourcesPath', { value: 'C:\\Reelferry\\resources' })
+  const userData = 'C:\\Users\\Test\\Reelferry'
+  const engine = 'C:\\Reelferry\\engine'
   const present = new Set()
   let python3Runnable = false
   let saved = null
@@ -367,7 +367,7 @@ test('Windows resolves the saved legacy Python default without replacing an inst
 })
 
 test('library rejects parseable but incomplete job output', async (t) => {
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'bridgeclip-library-'))
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'reelferry-library-'))
   const run = path.join(root, 'run-one')
   fs.mkdirSync(run)
   fs.writeFileSync(path.join(run, 'job_output.json'), JSON.stringify({ job_id: 'run-one' }))
@@ -395,7 +395,7 @@ test('library rejects parseable but incomplete job output', async (t) => {
 })
 
 test('job output rejects a link substituted during open when O_NOFOLLOW is unavailable', { skip: !fileLinksAvailable }, async () => {
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'bridgeclip-output-open-'))
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'reelferry-output-open-'))
   const run = path.join(root, 'run-one')
   const output = path.join(run, 'job_output.json')
   const outside = path.join(root, 'outside.json')
@@ -424,7 +424,7 @@ test('job output rejects a link substituted during open when O_NOFOLLOW is unava
 })
 
 test('library retains unfinished desktop runs and ignores unrelated folders', async () => {
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'bridgeclip-library-'))
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'reelferry-library-'))
   const jobId = '9d69d14f-2b56-414e-b11e-bdb38a0e2877'
   fs.mkdirSync(path.join(root, jobId))
   fs.mkdirSync(path.join(root, 'Other files'))
@@ -439,7 +439,7 @@ test('library retains unfinished desktop runs and ignores unrelated folders', as
 })
 
 test('run history persists outcomes, identifies interrupted work, and omits source query data', async (t) => {
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'bridgeclip-history-'))
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'reelferry-history-'))
   const failedId = '4de005c2-1234-4123-8123-567890abcdef'
   const runningId = '4de005c3-1234-4123-8123-567890abcdef'
   const cancelledId = '4de005c4-1234-4123-8123-567890abcdef'
@@ -475,7 +475,7 @@ test('run history persists outcomes, identifies interrupted work, and omits sour
 })
 
 test('diagnostic logs omit source URLs and use private file permissions', () => {
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'bridgeclip-logs-'))
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'reelferry-logs-'))
   const loggerModule = loadSource('logger.ts', {
     electron: { app: { getPath: () => root } }
   }, { console: { log() {}, warn() {}, error() {} } })
@@ -587,7 +587,7 @@ test('pipeline rejects a mismatched result identity and a failed process exit', 
 test('a bridge failure is saved in run history before the UI receives it', async () => {
   const { PassThrough } = require('node:stream')
   const { EventEmitter } = require('node:events')
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'bridgeclip-run-failure-'))
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'reelferry-run-failure-'))
   const jobId = 'a45127ce-1234-4123-8123-567890abcdef'
   const child = new EventEmitter()
   child.stdin = new PassThrough()
@@ -691,7 +691,7 @@ test('cancellation retains a live process group after the leader closes and forc
 
 test('crash logs keep safe diagnostics without leaking credentials from errors', () => {
   const lines = []
-  const logDir = fs.mkdtempSync(path.join(os.tmpdir(), 'bridgeclip-log-test-'))
+  const logDir = fs.mkdtempSync(path.join(os.tmpdir(), 'reelferry-log-test-'))
   const { logger, errorSummary } = loadSource('logger.ts', {
     electron: { app: { getPath: () => logDir } },
     fs: { ...fs, appendFileSync: (_file, line) => lines.push(JSON.parse(line)) }
