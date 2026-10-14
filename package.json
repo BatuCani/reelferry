@@ -6,7 +6,7 @@
   "description": "Reelferry: open-source, agent-first AI video clipping. Turn long videos into captioned short-form clips, locally, with your own API keys. Based on BridgeClip by BridgeMind (MIT).",
   "main": "./out/main/index.js",
   "author": "BatuCani",
-  "license": "MIT",
+  "license": "Apache-2.0",
   "homepage": "https://github.com/BatuCani/reelferry",
   "repository": {
     "type": "git",
