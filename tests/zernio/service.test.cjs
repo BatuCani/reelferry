@@ -74,6 +74,9 @@ test('connect: opens the platform sign-in, completes on the loopback redirect an
   assert.equal(fake.calls.focused, 1)
   if (process.platform === 'darwin') assert.deepEqual(fake.calls.focus, [{ steal: true }])
 
+  // The scripted browser records the redirect and then refreshes the tab after
+  // the app has already reported the result, so wait for the refresh first.
+  await mock.waitFor(() => mock.state.visits.some((v) => v.repeat))
   const visits = mock.state.visits
   assert.equal(visits.find((v) => v.url.endsWith('/favicon.ico')).status, 404)
   assert.equal(visits.filter((v) => v.url === visits.at(-1).url && !v.url.endsWith('favicon.ico')).length >= 1, true)
