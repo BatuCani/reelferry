@@ -230,8 +230,17 @@ class CtcAligner:
         return AlignResult(words=make_monotonic(out), aligned_words=aligned, total_words=total)
 
 
+MIN_WORD_SECONDS = 0.05
+
+
 def _fill_gaps(words: list[Word], timed: list[Word | None]) -> list[Word]:
-    """Give words without alignable characters (e.g. '42') a slot between neighbours."""
+    """Time words without alignable characters (e.g. '$49') by Whisper's own timing.
+
+    The CTC sequence has no tokens for their speech, so the path hands that audio to the
+    aligned neighbours. The run keeps Whisper's span (kept inside the neighbours) and the
+    neighbours' facing edges are trimmed back to it.
+    """
+    timed = list(timed)
     result: list[Word] = []
     index = 0
     while index < len(words):
@@ -243,17 +252,22 @@ def _fill_gaps(words: list[Word], timed: list[Word | None]) -> list[Word]:
         run_end = index
         while run_end < len(words) and timed[run_end] is None:
             run_end += 1
-        left = result[-1].end if result else words[index].start
-        right_item = timed[run_end] if run_end < len(words) else None
-        right = right_item.start if right_item is not None else words[run_end - 1].end
-        if right <= left:
-            right = left + 0.05 * (run_end - index)
-        weights = [max(1, len(w.text)) for w in words[index:run_end]]
-        cursor = left
-        for word, weight in zip(words[index:run_end], weights, strict=True):
-            width = (right - left) * weight / sum(weights)
-            result.append(word.model_copy(update={"start": cursor, "end": cursor + width}))
-            cursor += width
+        left = result[-1] if result else None
+        right = timed[run_end] if run_end < len(words) else None
+        lo = left.start + MIN_WORD_SECONDS if left is not None else 0.0
+        hi = right.end - MIN_WORD_SECONDS if right is not None else float("inf")
+        if hi < lo:
+            hi = lo
+        run_start = min(max(words[index].start, lo), hi)
+        run_stop = min(max(words[run_end - 1].end, run_start), hi)
+        if left is not None and left.end > run_start:
+            result[-1] = left.model_copy(update={"end": run_start})
+        for word in words[index:run_end]:
+            start = min(max(word.start, run_start), run_stop)
+            end = min(max(word.end, start), run_stop)
+            result.append(word.model_copy(update={"start": start, "end": end}))
+        if right is not None and right.start < run_stop:
+            timed[run_end] = right.model_copy(update={"start": run_stop})
         index = run_end
     return result
 

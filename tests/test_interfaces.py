@@ -232,13 +232,13 @@ def test_cli_wait_runs_the_job_inline(talk_video: Path, monkeypatch: pytest.Monk
 
     monkeypatch.setattr(app_module.App, "__init__", patched)
     runner = CliRunner()
-    added = json.loads(runner.invoke(main, ["source", "add", str(talk_video), "--json"]).output)
+    added = json.loads(runner.invoke(main, ["source", "add", str(talk_video), "--json"]).stdout)
     source_id = added["source"]["id"]
     out = runner.invoke(main, ["transcript", "create", source_id, "--wait", "--json"])
     assert out.exit_code == 0, out.output
-    assert json.loads(out.output)["job"]["status"] == "succeeded"
+    assert json.loads(out.stdout)["job"]["status"] == "succeeded"
     text = runner.invoke(main, ["transcript", "get", source_id, "--format", "text", "--json"])
-    assert json.loads(text.output)["text"].startswith("Welcome back")
+    assert json.loads(text.stdout)["text"].startswith("Welcome back")
 
 
 MCP_WITH_BLOCKING_JOB = """
@@ -286,3 +286,13 @@ def test_mcp_releases_a_busy_job_at_once_on_sigterm_with_stdin_open(app: App) ->
     assert held.attempts == 0
     assert app.jobs.claim("wrk_next") == job.id
     assert app.db.one("SELECT id FROM workers") is None
+
+
+def test_cli_help_shows_only_real_defaults() -> None:
+    runner = CliRunner()
+    edit = runner.invoke(main, ["transcript", "edit", "--help"])
+    assert edit.exit_code == 0, edit.output
+    assert "--edits" in edit.output
+    assert "PydanticUndefined" not in edit.output
+    wait = runner.invoke(main, ["job", "wait", "--help"])
+    assert "[default: 60" in " ".join(wait.output.split())

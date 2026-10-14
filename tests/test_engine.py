@@ -1,10 +1,16 @@
 from __future__ import annotations
 
-import numpy as np
+import wave
+from pathlib import Path
+from types import SimpleNamespace
+from typing import Any
 
-from reelferry.engine.align import ctc_viterbi, make_monotonic
+import numpy as np
+import pytest
+
+from reelferry.engine.align import _fill_gaps, ctc_viterbi, make_monotonic
 from reelferry.engine.suggest import SuggestRequest, build_segments, snap_to_words, suggest
-from reelferry.engine.transcribe import _cloud_words
+from reelferry.engine.transcribe import LocalWhisper, _cloud_words
 from reelferry.models import Word
 from reelferry.operations.transcripts import Replacement, apply_replacement
 
@@ -142,3 +148,98 @@ def test_cloud_words_offset_and_fallback() -> None:
     words = _cloud_words(seg_only, offset=0)
     assert [w.text for w in words] == ["two", "words"]
     assert words[1].end == 2.0
+
+
+def _silent_wav(path: Path, seconds: float) -> Path:
+    with wave.open(str(path), "wb") as handle:
+        handle.setnchannels(1)
+        handle.setsampwidth(2)
+        handle.setframerate(16_000)
+        handle.writeframes(b"\0\0" * int(16_000 * seconds))
+    return path
+
+
+def _fake_whisper(
+    monkeypatch: pytest.MonkeyPatch, language: str, words: list[tuple[str, float, float]]
+) -> None:
+    class FakeModel:
+        def __init__(self, *args: Any, **kwargs: Any) -> None:
+            pass
+
+        def transcribe(self, *args: Any, **kwargs: Any) -> tuple[Any, Any]:
+            segment = SimpleNamespace(
+                end=words[-1][2],
+                words=[SimpleNamespace(word=w, start=s, end=e, probability=0.9) for w, s, e in words],
+            )
+            return iter([segment]), SimpleNamespace(language=language)
+
+    monkeypatch.setattr("faster_whisper.WhisperModel", FakeModel)
+
+
+def test_local_whisper_joins_continuation_tokens_into_one_word(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # faster-whisper splits "10,000" into " 10" and ",000"; no leading space means same word.
+    _fake_whisper(
+        monkeypatch,
+        "en",
+        [(" It", 0.0, 0.2), (" got", 0.2, 0.4), (" 10", 0.4, 0.7), (",000", 0.7, 1.1),
+         (" views.", 1.1, 1.5)],
+    )
+    raw = LocalWhisper(str(tmp_path), "cpu", "int8").transcribe(
+        _silent_wav(tmp_path / "a.wav", 2), language=None, vocabulary=[],
+        progress=lambda f, m: None, ctx=None,
+    )
+    words = raw.segments[0]
+    assert [w.text for w in words] == ["It", "got", "10,000", "views."]
+    assert (words[2].start, words[2].end) == (0.4, 1.1)
+
+
+def test_local_whisper_keeps_words_of_unspaced_languages_apart(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    _fake_whisper(monkeypatch, "ja", [("今日", 0.0, 0.4), ("は", 0.4, 0.6), ("晴れ", 0.6, 1.0)])
+    raw = LocalWhisper(str(tmp_path), "cpu", "int8").transcribe(
+        _silent_wav(tmp_path / "a.wav", 2), language=None, vocabulary=[],
+        progress=lambda f, m: None, ctx=None,
+    )
+    assert [w.text for w in raw.segments[0]] == ["今日", "は", "晴れ"]
+
+
+def test_unalignable_number_keeps_whisper_timing_and_neighbours_yield_its_audio() -> None:
+    # Live case: CTC has no tokens for "$49", so "per" swallowed the spoken number.
+    words = [
+        Word(text="charge", start=5.0, end=5.42),
+        Word(text="$49", start=5.42, end=6.12),
+        Word(text="per", start=6.12, end=6.4),
+        Word(text="month", start=6.4, end=6.8),
+    ]
+    timed: list[Word | None] = [
+        words[0].model_copy(update={"start": 5.02, "end": 5.42}),
+        None,
+        words[2].model_copy(update={"start": 5.52, "end": 6.43}),
+        words[3].model_copy(update={"start": 6.45, "end": 6.82}),
+    ]
+    out = _fill_gaps(words, timed)
+    assert [(w.text, w.start, w.end) for w in out] == [
+        ("charge", 5.02, 5.42),
+        ("$49", 5.42, 6.12),
+        ("per", 6.12, 6.43),
+        ("month", 6.45, 6.82),
+    ]
+
+
+def test_unalignable_word_stays_inside_its_aligned_neighbours() -> None:
+    words = [
+        Word(text="at", start=1.0, end=1.2),
+        Word(text="42", start=0.2, end=3.0),
+        Word(text="now", start=2.0, end=2.3),
+    ]
+    timed: list[Word | None] = [
+        words[0].model_copy(update={"start": 1.0, "end": 1.3}),
+        None,
+        words[2].model_copy(update={"start": 1.6, "end": 2.0}),
+    ]
+    at, number, now = _fill_gaps(words, timed)
+    assert at.start < number.start < number.end < now.end
+    assert at.end - at.start > 0 and now.end - now.start > 0

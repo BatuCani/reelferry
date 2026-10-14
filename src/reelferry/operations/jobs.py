@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import time
+
 from pydantic import Field
 
 from reelferry.app import App
@@ -71,10 +73,17 @@ def get_job(app: App, inp: JobIdInput) -> JobOutput:
 def wait_job(app: App, inp: WaitJobInput) -> WaitJobOutput:
     """Block until the job succeeds, fails or is canceled, or until `timeout` seconds pass.
     Call again if done is false."""
-    if not app.jobs.get(inp.job_id).status.terminal:
+    deadline = time.monotonic() + inp.timeout
+    while True:
+        job = app.jobs.get(inp.job_id)
+        if job.status.terminal:
+            return WaitJobOutput(job=job, done=True)
+        # Checked every second: the worker serving the job may die while we wait.
         ensure_worker(app)
-    job = app.jobs.wait(inp.job_id, inp.timeout)
-    return WaitJobOutput(job=job, done=job.status.terminal)
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
+            return WaitJobOutput(job=job, done=False)
+        app.jobs.wait(inp.job_id, min(1.0, remaining))
 
 
 @operation(

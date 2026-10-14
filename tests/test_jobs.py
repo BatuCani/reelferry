@@ -386,3 +386,77 @@ def test_a_second_interrupt_while_stopping_does_not_deadlock() -> None:
     assert not thread.is_alive()
     assert errors == []
     assert stopping.is_set()
+
+
+@pytest.mark.timeout(60)
+def test_wait_job_starts_a_worker_when_the_one_holding_the_job_dies(
+    app: App, test_handler: list[str], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from reelferry.operations import jobs as job_ops
+
+    started: list[Worker] = []
+
+    def ensure_worker(app: App) -> None:
+        # Stands in for the detached worker the real ensure_worker spawns.
+        if app.jobs.live_workers() == 0:
+            worker = Worker(App(app.paths), concurrency=1)
+            worker.start()
+            started.append(worker)
+
+    monkeypatch.setattr(job_ops, "ensure_worker", ensure_worker)
+    job = app.jobs.enqueue(JobKind.SUGGEST_CLIPS, {})
+    app.jobs.register_worker("wrk_doomed")
+    assert app.jobs.claim("wrk_doomed") == job.id
+
+    def worker_dies() -> None:
+        time.sleep(1.5)
+        app.db.execute("UPDATE workers SET heartbeat_at = 0 WHERE id = 'wrk_doomed'")
+        app.db.execute("UPDATE jobs SET lease_expires_at = 0 WHERE id = ?", (job.id,))
+        app.db.close()
+
+    killer = threading.Thread(target=worker_dies)
+    killer.start()
+    try:
+        out = load_operations()["wait_job"].run(App(app.paths), {"job_id": job.id, "timeout": 20})
+    finally:
+        killer.join()
+        for worker in started:
+            worker.stop()
+    assert out.done
+    assert out.job.status is JobStatus.SUCCEEDED
+
+
+def _source_job(app: App) -> tuple[Any, Any]:
+    load_operations()
+    source = insert_source(
+        app.db, kind="url", uri="https://example.com/v", title="v", status=SourceStatus.DOWNLOADING
+    )
+    job = app.jobs.enqueue(JobKind.DOWNLOAD_SOURCE, {"url": source.uri}, source_id=source.id)
+    return source, job
+
+
+def test_canceling_a_released_job_ends_it_at_once(app: App) -> None:
+    source, job = _source_job(app)
+    assert app.jobs.claim("wrk_stopped") == job.id
+    app.jobs.release("wrk_stopped")
+
+    canceled = jobs.cancel(app, job.id)
+    assert canceled.status is JobStatus.CANCELED
+    assert canceled.finished_at is not None
+    assert get_source(app.db, source.id).status is SourceStatus.FAILED
+    assert app.jobs.claim("wrk_next") is None
+
+
+def test_canceling_a_job_of_a_crashed_worker_ends_it_at_once(app: App) -> None:
+    _, job = _source_job(app)
+    assert app.jobs.claim("wrk_crashed") == job.id
+    app.db.execute("UPDATE jobs SET lease_expires_at = 0 WHERE id = ?", (job.id,))
+    assert jobs.cancel(app, job.id).status is JobStatus.CANCELED
+
+
+def test_canceling_a_job_held_by_a_live_worker_leaves_it_to_that_worker(app: App) -> None:
+    _, job = _source_job(app)
+    assert app.jobs.claim("wrk_live") == job.id
+    held = jobs.cancel(app, job.id)
+    assert held.status is JobStatus.RUNNING
+    assert app.jobs.cancel_requested(job.id)

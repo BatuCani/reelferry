@@ -145,9 +145,18 @@ class JobStore:
                     (JobStatus.CANCELED.value, ts, ts, job_id),
                 )
             elif status is JobStatus.RUNNING:
+                ts = now_iso()
                 conn.execute(
                     "UPDATE jobs SET cancel_requested = 1, updated_at = ? WHERE id = ?",
-                    (now_iso(), job_id),
+                    (ts, job_id),
+                )
+                # Released by a stopped worker, or left by a crashed one: no one will reach
+                # a checkpoint, so end it here.
+                conn.execute(
+                    "UPDATE jobs SET status = ?, finished_at = ?, message = 'canceled',"
+                    " lease_owner = NULL, lease_expires_at = NULL WHERE id = ?"
+                    " AND (lease_owner IS NULL OR lease_expires_at < ?)",
+                    (JobStatus.CANCELED.value, ts, job_id, time.time()),
                 )
         return self.get(job_id)
 
@@ -611,11 +620,14 @@ def stop_on_signals() -> Iterator[None]:
 
 
 def cancel(app: App, job_id: str) -> Job:
-    """Cancel a job. A queued job ends at once (and its end hook runs here)."""
+    """Cancel a job. A queued job, or a running one no worker holds, ends at once (and its
+    end hook runs here); a held one stops at its worker's next checkpoint."""
     before = app.jobs.get(job_id)
     job = app.jobs.request_cancel(job_id)
     if not before.status.terminal and job.status is JobStatus.CANCELED:
         notify_job_end(app, job)
+    elif job.status is JobStatus.RUNNING:
+        ensure_worker(app)
     return job
 
 

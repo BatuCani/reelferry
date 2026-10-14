@@ -48,11 +48,30 @@ class Transcriber(Protocol):
     ) -> RawTranscript: ...
 
 
-def _clean_words(raw: list[tuple[str, float, float, float | None]]) -> list[Word]:
+# Languages faster-whisper splits without spaces, so a missing leading space means nothing.
+UNSPACED_LANGUAGES = {"zh", "ja", "th", "lo", "my", "yue"}
+
+
+def _clean_words(
+    raw: list[tuple[str, float, float, float | None]], *, join_continuations: bool = False
+) -> list[Word]:
+    """Strip and drop empty words. With ``join_continuations``, a word without a leading
+    space continues the previous one (Whisper splits "10,000" into " 10" and ",000")."""
     words: list[Word] = []
     for raw_text, start, end, prob in raw:
         text = raw_text.strip()
         if not text:
+            continue
+        if join_continuations and words and not raw_text[:1].isspace():
+            last = words[-1]
+            probs = [p for p in (last.probability, prob) if p is not None]
+            words[-1] = last.model_copy(
+                update={
+                    "text": last.text + text,
+                    "end": round(max(float(end), last.end), 3),
+                    "probability": round(float(min(probs)), 3) if probs else None,
+                }
+            )
             continue
         words.append(
             Word(
@@ -133,10 +152,11 @@ class LocalWhisper:
                 hotwords=", ".join(vocabulary) if vocabulary else None,
             )
             progress(0.0, "transcribing")
+            spaced = info.language not in UNSPACED_LANGUAGES
             segments: list[list[Word]] = []
             for segment in segments_iter:
                 raw = [(w.word, w.start, w.end, w.probability) for w in segment.words or []]
-                words = _clean_words(raw)
+                words = _clean_words(raw, join_continuations=spaced)
                 if words:
                     segments.append(words)
                 progress(min(1.0, segment.end / max(duration, 0.001)), None)

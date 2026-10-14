@@ -15,6 +15,7 @@ from typing import Any, Literal, Union, get_args, get_origin
 import click
 from pydantic import ValidationError
 from pydantic.fields import FieldInfo
+from pydantic_core import PydanticUndefined
 
 from reelferry import __version__
 from reelferry.errors import ErrorCode, ReelferryError
@@ -82,7 +83,7 @@ def _params_for(op: Operation) -> tuple[list[click.Parameter], set[str]]:
         if is_json:
             json_fields.add(name)
             help_text = (help_text + " (JSON)").strip()
-        if not info.is_required() and info.default not in (None, [], ()):
+        if not info.is_required() and info.default not in (None, [], (), PydanticUndefined):
             default = info.default
             if isinstance(default, Enum):
                 default = default.value
