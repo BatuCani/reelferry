@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import contextlib
 import re
 from pathlib import Path
 from typing import Any
@@ -426,7 +427,9 @@ def run_render(app: App, ctx: JobContext) -> dict[str, Any]:
     if burn:
         ff.require_libass()
     output = out_dir / f"{stem}.mp4"
-    partial = out_dir / f".{stem}.partial.mp4"
+    # Each worker writes its own partial: a crashed worker's ffmpeg can outlive it and
+    # must never write into the file this attempt publishes.
+    partial = out_dir / f".{stem}.{ctx.owner}.partial.mp4"
     plan = RenderPlan(
         source=Path(str(source.path)),
         start=clip.start,
@@ -450,6 +453,9 @@ def run_render(app: App, ctx: JobContext) -> dict[str, Any]:
     ctx.progress(0.0, "rendering")
     ctx.run_process(render_cmd(ff, plan), on_line=on_line, cwd=out_dir)
     partial.replace(output)
+    for stale in out_dir.glob(f".{stem}.*.partial.mp4"):
+        with contextlib.suppress(OSError):
+            stale.unlink()
     info = probe(ff, output)
     render = insert_render(
         app.db,

@@ -2,6 +2,11 @@
 
 from __future__ import annotations
 
+import os
+import signal
+import subprocess
+import sys
+import time
 from pathlib import Path
 from typing import Any
 
@@ -271,3 +276,90 @@ def test_cancel_render(app: App, ready: dict[str, Any]) -> None:
     assert call(app, "get_clip", clip_id=clip.id).clip.status is ClipStatus.DRAFT
     job = finished(app, call(app, "render_clip", clip_id=clip.id).job)
     assert job.status is JobStatus.SUCCEEDED, job.error
+
+
+CRASHING_WORKER = """
+import subprocess, sys, time
+from pathlib import Path
+from reelferry.app import App
+from reelferry.config import Paths
+from reelferry.jobs import Worker
+from reelferry.registry import load_operations
+
+real_popen = subprocess.Popen
+
+def recording_popen(*args, **kwargs):
+    proc = real_popen(*args, **kwargs)
+    with open(sys.argv[3], "a") as pids:
+        pids.write(f"{proc.pid}\\n")
+    return proc
+
+subprocess.Popen = recording_popen
+load_operations()
+Worker(App(Paths(data_dir=Path(sys.argv[1]), media_dir=Path(sys.argv[2]))), concurrency=1).start()
+time.sleep(600)
+"""
+
+
+def _wait_until(check: Any, timeout: float = 30) -> None:
+    deadline = time.monotonic() + timeout
+    while not check():
+        assert time.monotonic() < deadline
+        time.sleep(0.05)
+
+
+def _alive(pid: int) -> bool:
+    try:
+        os.kill(pid, 0)
+    except ProcessLookupError:
+        return False
+    return True
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="POSIX signals")
+@pytest.mark.timeout(120)
+def test_render_resumed_after_a_worker_crash_is_not_corrupted_by_its_orphan(
+    app: App, ready: dict[str, Any], tmp_path: Path
+) -> None:
+    clip = call(
+        app, "create_clip", source_id=ready["source"].id, start=0.5, end=19.5, burn_captions=False
+    ).clip
+    job = call(app, "render_clip", clip_id=clip.id).job
+    pid_file = tmp_path / "children.txt"
+    crashing = subprocess.Popen(
+        [
+            sys.executable,
+            "-c",
+            CRASHING_WORKER,
+            str(app.paths.data_dir),
+            str(app.paths.media_dir),
+            str(pid_file),
+        ]
+    )
+    try:
+        _wait_until(lambda: app.jobs.get(job.id).progress > 0)
+    finally:
+        crashing.kill()  # kill -9: no cleanup runs, the ffmpeg child lives on
+        crashing.wait()
+    orphan = int(pid_file.read_text().split()[-1])
+    os.kill(orphan, signal.SIGSTOP)  # keep the orphan mid-write while the job resumes
+    try:
+        app.db.execute("UPDATE jobs SET lease_expires_at = 0 WHERE id = ?", (job.id,))
+        resumed = finished(app, job)
+        assert resumed.status is JobStatus.SUCCEEDED, resumed.error
+        assert resumed.attempts == 2
+    finally:
+        os.kill(orphan, signal.SIGCONT)
+    _wait_until(lambda: not _alive(orphan), timeout=60)
+
+    render = call(app, "get_clip", clip_id=clip.id).clip.latest_render
+    video = Path(render.video_path)
+    decode = subprocess.run(
+        ["ffmpeg", "-v", "error", "-i", str(video), "-f", "null", "-"],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert decode.returncode == 0 and decode.stderr == ""
+    assert probe(app.ffmpeg(), video)["duration"] == pytest.approx(19, abs=0.2)
+    assert [p.name for p in video.parent.glob(".*.partial.mp4")] == []
