@@ -256,8 +256,7 @@ def _fill_gaps(words: list[Word], timed: list[Word | None]) -> list[Word]:
         right = timed[run_end] if run_end < len(words) else None
         lo = left.start + MIN_WORD_SECONDS if left is not None else 0.0
         hi = right.end - MIN_WORD_SECONDS if right is not None else float("inf")
-        if hi < lo:
-            hi = lo
+        hi = max(hi, lo)
         run_start = min(max(words[index].start, lo), hi)
         run_stop = min(max(words[run_end - 1].end, run_start), hi)
         if left is not None and left.end > run_start:

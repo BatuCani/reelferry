@@ -169,7 +169,9 @@ def _fake_whisper(
         def transcribe(self, *args: Any, **kwargs: Any) -> tuple[Any, Any]:
             segment = SimpleNamespace(
                 end=words[-1][2],
-                words=[SimpleNamespace(word=w, start=s, end=e, probability=0.9) for w, s, e in words],
+                words=[
+                    SimpleNamespace(word=w, start=s, end=e, probability=0.9) for w, s, e in words
+                ],
             )
             return iter([segment]), SimpleNamespace(language=language)
 
@@ -183,12 +185,20 @@ def test_local_whisper_joins_continuation_tokens_into_one_word(
     _fake_whisper(
         monkeypatch,
         "en",
-        [(" It", 0.0, 0.2), (" got", 0.2, 0.4), (" 10", 0.4, 0.7), (",000", 0.7, 1.1),
-         (" views.", 1.1, 1.5)],
+        [
+            (" It", 0.0, 0.2),
+            (" got", 0.2, 0.4),
+            (" 10", 0.4, 0.7),
+            (",000", 0.7, 1.1),
+            (" views.", 1.1, 1.5),
+        ],
     )
     raw = LocalWhisper(str(tmp_path), "cpu", "int8").transcribe(
-        _silent_wav(tmp_path / "a.wav", 2), language=None, vocabulary=[],
-        progress=lambda f, m: None, ctx=None,
+        _silent_wav(tmp_path / "a.wav", 2),
+        language=None,
+        vocabulary=[],
+        progress=lambda f, m: None,
+        ctx=None,
     )
     words = raw.segments[0]
     assert [w.text for w in words] == ["It", "got", "10,000", "views."]
@@ -200,8 +210,11 @@ def test_local_whisper_keeps_words_of_unspaced_languages_apart(
 ) -> None:
     _fake_whisper(monkeypatch, "ja", [("今日", 0.0, 0.4), ("は", 0.4, 0.6), ("晴れ", 0.6, 1.0)])
     raw = LocalWhisper(str(tmp_path), "cpu", "int8").transcribe(
-        _silent_wav(tmp_path / "a.wav", 2), language=None, vocabulary=[],
-        progress=lambda f, m: None, ctx=None,
+        _silent_wav(tmp_path / "a.wav", 2),
+        language=None,
+        vocabulary=[],
+        progress=lambda f, m: None,
+        ctx=None,
     )
     assert [w.text for w in raw.segments[0]] == ["今日", "は", "晴れ"]
 

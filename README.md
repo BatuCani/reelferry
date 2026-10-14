@@ -137,10 +137,12 @@ Then just ask, for example: *"Take ~/Videos/podcast.mp4, find the 5 strongest mo
 | Tool | What it does |
 | --- | --- |
 | `add_source` | Add a local file or a public link (downloaded with yt-dlp) |
+| `get_source` / `list_sources` | Look up sources with their status, duration and transcript state |
 | `transcribe` | Local transcription with exact word timings (job) |
 | `get_transcript` | Read segments, words with indexes, or plain text, optionally for a time range |
 | `edit_transcript` | Fix words by index or replace names everywhere; timings stay intact |
 | `suggest_clips` | LLM finds moments for a goal, with hook title, score and reason (job) |
+| `list_candidates` | Read the clip suggestions made for a source |
 | `create_clip` / `update_clip` | Clip from a suggestion or from start/end; change bounds, format, framing, style |
 | `render_clip` | MP4 render, 9:16 or 16:9, crop or blurred fit, captions burned or soft (job) |
 | `preview_clip` | Contact sheet of frames, returned as an image so the agent can check framing |

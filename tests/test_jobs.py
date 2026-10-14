@@ -5,7 +5,7 @@ import signal
 import sys
 import threading
 import time
-from typing import Any
+from typing import Any, cast
 
 import pytest
 
@@ -417,7 +417,10 @@ def test_wait_job_starts_a_worker_when_the_one_holding_the_job_dies(
     killer = threading.Thread(target=worker_dies)
     killer.start()
     try:
-        out = load_operations()["wait_job"].run(App(app.paths), {"job_id": job.id, "timeout": 20})
+        out = cast(
+            job_ops.WaitJobOutput,
+            load_operations()["wait_job"].run(App(app.paths), {"job_id": job.id, "timeout": 20}),
+        )
     finally:
         killer.join()
         for worker in started:
