@@ -30,7 +30,7 @@ The agent interface (MCP, CLI and a local API), local transcription with exact w
 - **Pay only for what you use.** Transcription and clip planning bill your OpenRouter account at their prices.
   Rendering happens locally with FFmpeg.
   Reelferry shows estimated API cost when the providers return usable usage data.
-- **Captions that look native.** Nine styles (Viral, Hormozi, Bold, Clean, Minimal, Fire, Glow, Neon, Karaoke), each with a live preview before you render.
+- **Captions that look native.** Thirteen styles (Pop, Spotlight, Impact, Glow, Boxed, Sweep, Editorial, Hype, Punch, Neon, Headline, Paper, Subtle), each with a live preview before you render.
 - **Open source.** Apache-2.0 licensed, built on MIT-licensed BridgeClip.
   Fork it, change it, ship it.
 
