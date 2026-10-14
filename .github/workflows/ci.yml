@@ -1,0 +1,51 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: Lint, typecheck and test
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install FFmpeg with libass
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends ffmpeg
+          ffmpeg -hide_banner -filters | grep -E '[[:space:]]ass[[:space:]]'
+
+      - name: Install engine dependencies
+        run: |
+          python -m venv engine/.venv
+          engine/.venv/bin/pip install --require-hashes -r engine/requirements.lock
+          engine/.venv/bin/pip install --require-hashes -r scripts/python-tools/pytest.lock
+          echo "$PWD/engine/.venv/bin" >> "$GITHUB_PATH"
+
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm run build
+      - run: npm test
+      - name: Engine tests
+        run: python -m pytest -q engine/tests
