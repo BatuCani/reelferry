@@ -130,9 +130,10 @@ test('other update errors are not retried', async () => {
 
 // ---- auto-updater state machine ---------------------------------------------
 
-const SIGNED = 'Executable=/Applications/Reelferry.app/Contents/MacOS/Reelferry\nAuthority=Developer ID Application: BRIDGEMIND LLC (9CBJCDR3J2)\nTeamIdentifier=9CBJCDR3J2\n'
+const OFFICIAL = { macTeamId: 'TEAM123456' }
+const SIGNED = 'Executable=/Applications/Reelferry.app/Contents/MacOS/Reelferry\nAuthority=Developer ID Application: Release Team (TEAM123456)\nTeamIdentifier=TEAM123456\n'
 
-function setup({ platform = 'darwin', dev = false, packaged = true, env = {}, codesign = SIGNED, holdCodesign = false, exe = '/Applications/Reelferry.app/Contents/MacOS/Reelferry' } = {}) {
+function setup({ official = OFFICIAL, platform = 'darwin', dev = false, packaged = true, env = {}, codesign = SIGNED, holdCodesign = false, exe = '/Applications/Reelferry.app/Contents/MacOS/Reelferry' } = {}) {
   const handlers = {}
   let releaseCodesign = null
   const sent = []
@@ -168,7 +169,7 @@ function setup({ platform = 'darwin', dev = false, packaged = true, env = {}, co
     '../shared/updates': updates,
     './security': { assertTrustedSender() {} },
     './logger': { logger: { info() {}, warn() {}, error() {} } },
-    './update-provider': { PlatformGitHubProvider: class {} }
+    './update-provider': { PlatformGitHubProvider: class {}, OFFICIAL_RELEASES: official }
   }, {
     process: { platform, env },
     setTimeout: (fn) => { timers.push(fn); return timers.length },
@@ -208,7 +209,10 @@ test('official macOS builds read the platform-aware GitHub feed and download in 
 for (const [name, options, reason] of [
   ['running from source', { dev: true, packaged: false }, 'development'],
   ['turned off by the environment', { env: { REELFERRY_DISABLE_AUTO_UPDATE: '1' } }, 'disabled'],
-  ['a macOS build not signed by BridgeMind', { codesign: '' }, 'unofficial'],
+  ['a macOS build while no signed releases are published', { official: null }, 'unofficial'],
+  ['a Windows build while no signed releases are published', { official: null, platform: 'win32', codesign: '' }, 'unofficial'],
+  ['a Linux build while no signed releases are published', { official: null, platform: 'linux', codesign: '' }, 'unofficial'],
+  ['a macOS build not signed by the release team', { codesign: '' }, 'unofficial'],
   ['a macOS build signed by another team', { codesign: 'Authority=Developer ID Application: Someone Else (ABCDE12345)\nTeamIdentifier=ABCDE12345\n' }, 'unofficial'],
   ['a macOS app running from its disk image', { exe: '/Volumes/Reelferry/Reelferry.app/Contents/MacOS/Reelferry' }, 'move-to-applications'],
   ['a quarantined macOS app', { exe: '/private/var/folders/x/AppTranslocation/ABC/d/Reelferry.app/Contents/MacOS/Reelferry' }, 'move-to-applications']

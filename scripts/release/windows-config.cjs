@@ -2,13 +2,13 @@
 const fs = require('node:fs')
 const yaml = require('js-yaml')
 const config = yaml.load(fs.readFileSync('electron-builder.yml', 'utf8'))
-for (const key of ['SIGNING_ENDPOINT', 'SIGNING_ACCOUNT', 'SIGNING_PROFILE']) {
+for (const key of ['SIGNING_PUBLISHER', 'SIGNING_ENDPOINT', 'SIGNING_ACCOUNT', 'SIGNING_PROFILE']) {
   if (!process.env[key]) throw new Error(`Missing ${key}`)
 }
 config.forceCodeSigning = true
 delete config.win.signtoolOptions
 config.win.azureSignOptions = {
-  publisherName: 'BRIDGEMIND LLC',
+  publisherName: process.env.SIGNING_PUBLISHER,
   endpoint: process.env.SIGNING_ENDPOINT,
   codeSigningAccountName: process.env.SIGNING_ACCOUNT,
   certificateProfileName: process.env.SIGNING_PROFILE,

@@ -62,7 +62,7 @@ function describe(update: UpdateState): string {
     case 'off':
       return {
         development: 'Updates are off when running from source. Pull the latest code to update.',
-        unofficial: 'Updates are off for builds not signed by BridgeMind. Download the official app from reelferry.ai to get updates.',
+        unofficial: 'Updates are off: this build is not an official signed release. Get new versions from GitHub Releases.',
         'move-to-applications': 'Move Reelferry to your Applications folder to get updates.',
         disabled: 'Updates are turned off (REELFERRY_DISABLE_AUTO_UPDATE).'
       }[update.reason]

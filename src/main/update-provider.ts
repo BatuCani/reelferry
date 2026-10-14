@@ -5,6 +5,12 @@ import { parseUpdateInfo, type ProviderRuntimeOptions } from 'electron-updater/o
 /** Where releases are published (electron-builder.yml `publish`). */
 export const UPDATE_REPOSITORY = { owner: 'BatuCani', repo: 'reelferry' } as const
 
+/**
+ * The signing identity of official release builds, or null while Reelferry
+ * publishes no signed releases. Without it no packaged build updates itself.
+ */
+export const OFFICIAL_RELEASES: { macTeamId: string } | null = null
+
 /** How many recent releases to look through for one that ships this platform. */
 const RELEASE_SCAN_LIMIT = 30
 

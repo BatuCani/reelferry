@@ -130,6 +130,8 @@ deb:
 
 # Auto-updates come from GitHub Releases: electron-updater reads
 # latest-mac.yml / latest.yml / latest-linux.yml from the published release.
+# They stay off until official signed releases exist (OFFICIAL_RELEASES in
+# src/main/update-provider.ts).
 publish:
   provider: github
   owner: BatuCani

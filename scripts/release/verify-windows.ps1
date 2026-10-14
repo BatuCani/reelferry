@@ -1,4 +1,4 @@
-param([Parameter(Mandatory=$true)][string]$Installer, [string]$Publisher = 'BRIDGEMIND LLC')
+param([Parameter(Mandatory=$true)][string]$Installer, [Parameter(Mandatory=$true)][string]$Publisher)
 $ErrorActionPreference = 'Stop'
 function Assert-Signature([string]$Path) {
     $signature = Get-AuthenticodeSignature -LiteralPath $Path

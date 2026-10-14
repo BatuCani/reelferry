@@ -10,10 +10,7 @@ import {
 } from '../shared/updates'
 import { assertTrustedSender } from './security'
 import { logger } from './logger'
-import { PlatformGitHubProvider } from './update-provider'
-
-/** The Developer ID team that signs official macOS builds (electron-builder.yml `mac.identity`). */
-const MAC_TEAM_ID = '9CBJCDR3J2'
+import { OFFICIAL_RELEASES, PlatformGitHubProvider } from './update-provider'
 
 let getWindow: () => BrowserWindow | null = () => null
 let lastCheckedAt: string | null = null
@@ -43,11 +40,11 @@ function macBundlePath(): string {
   return posix.resolve(app.getPath('exe'), '..', '..', '..')
 }
 
-/** Official builds carry BridgeMind's Developer ID; a local `npm run dist:mac` build doesn't. */
-function signedByBridgeMind(): Promise<boolean> {
+/** Official builds carry the release team's Developer ID; a local `npm run dist:mac` build doesn't. */
+function signedByTeam(teamId: string): Promise<boolean> {
   return new Promise((done) => {
     execFile('/usr/bin/codesign', ['--display', '--verbose=2', macBundlePath()], { timeout: 10_000 }, (error, _stdout, stderr) => {
-      done(!error && new RegExp(`^TeamIdentifier=${MAC_TEAM_ID}$`, 'm').test(stderr) && /^Authority=Developer ID Application: /m.test(stderr))
+      done(!error && new RegExp(`^TeamIdentifier=${teamId}$`, 'm').test(stderr) && /^Authority=Developer ID Application: /m.test(stderr))
     })
   })
 }
@@ -55,8 +52,10 @@ function signedByBridgeMind(): Promise<boolean> {
 async function updatesOffReason(): Promise<UpdatesOffReason | null> {
   if (process.env.REELFERRY_DISABLE_AUTO_UPDATE === '1') return 'disabled'
   if (is.dev || !app.isPackaged) return 'development'
+  // No signed releases are published yet, so there is nothing trusted to update from.
+  if (!OFFICIAL_RELEASES) return 'unofficial'
   if (process.platform === 'darwin') {
-    if (!(await signedByBridgeMind())) return 'unofficial'
+    if (!(await signedByTeam(OFFICIAL_RELEASES.macTeamId))) return 'unofficial'
     // Squirrel.Mac replaces the app bundle in place. It can't from the
     // read-only disk image or a quarantined copy macOS runs from a random path.
     const bundle = macBundlePath()
