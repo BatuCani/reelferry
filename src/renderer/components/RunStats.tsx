@@ -189,7 +189,7 @@ function StatCell({ index, icon, label, hint, value, final, sub }: {
             </>
           ) : value}
         </dd>
-        {sub && <dd className="mt-1 truncate text-xs text-ink-subtle">{sub}</dd>}
+        {sub && <dd className="mt-1 break-words text-xs text-ink-subtle">{sub}</dd>}
       </dl>
     </div>
   )
