@@ -1,0 +1,140 @@
+appId: io.github.batucani.reelferry
+productName: Reelferry
+artifactName: Reelferry-${version}-${os}-${arch}.${ext}
+copyright: Copyright © 2026 Reelferry contributors. Based on BridgeClip, Copyright © 2026 BridgeMind LLC.
+
+# Disable production debug/code-injection entry points and validate app.asar.
+electronFuses:
+  runAsNode: false
+  enableNodeOptionsEnvironmentVariable: false
+  enableNodeCliInspectArguments: false
+  enableEmbeddedAsarIntegrityValidation: true
+  onlyLoadAppFromAsar: true
+
+directories:
+  output: dist
+  buildResources: build
+
+files:
+  - out/**/*
+  - "!out/**/*.map"
+  - package.json
+
+# The Python bridge runner is invoked by the main process via child_process.spawn.
+# It must live OUTSIDE app.asar so the filesystem path is directly readable by
+# the Python interpreter. pipeline-runner.ts#getBridgeRunnerPath() looks it up
+# via process.resourcesPath when app.isPackaged is true.
+extraResources:
+  - from: out/renderer/THIRD_PARTY_LICENSES.txt
+    to: RENDERER-THIRD-PARTY-LICENSES.txt
+  - from: LICENSE
+    to: LICENSE
+  - from: licenses/BridgeClip-MIT.txt
+    to: BridgeClip-MIT.txt
+  - from: THIRD_PARTY_NOTICES.md
+    to: THIRD_PARTY_NOTICES.md
+  - from: src/renderer/assets/fonts/Geist-OFL.txt
+    to: Geist-OFL.txt
+  - from: bridge
+    to: bridge
+    filter:
+      - "**/*.py"
+      - "**/*.txt"
+      - "!**/test_*.py"
+  - from: engine
+    to: engine
+    filter:
+      - "clip_engine/**/*"
+      - "assets/**/*"
+      - "requirements.txt"
+      - "requirements.lock"
+      - "LICENSE"
+      - "THIRD_PARTY_NOTICES.md"
+      - "!**/__pycache__"
+      - "!**/*.pyc"
+  - from: engine-venv
+    to: engine-venv
+    filter:
+      - "**/*"
+  - from: engine-bin
+    to: engine-bin
+    filter:
+      - "**/*"
+
+extraMetadata:
+  main: ./out/main/index.js
+
+mac:
+  category: public.app-category.video
+  hardenedRuntime: true
+  gatekeeperAssess: false
+  entitlements: build/entitlements.mac.plist
+  entitlementsInherit: build/entitlements.mac.plist
+  # Each native CI job stages one architecture's Python and media binaries.
+  # Let the CLI architecture select these targets; an explicit arch list here
+  # would override it and package incompatible resources into the other app.
+  target:
+    - dmg
+    - zip
+
+dmg:
+  sign: false
+  contents:
+    - x: 180
+      y: 240
+      type: file
+    - x: 480
+      y: 240
+      type: link
+      path: /Applications
+
+win:
+  verifyUpdateCodeSignature: true
+  target:
+    - target: nsis
+      arch:
+        - x64
+  icon: build/icon.ico
+
+nsis:
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+  installerIcon: build/icon.ico
+  uninstallerIcon: build/icon.ico
+  installerHeaderIcon: build/icon.ico
+
+linux:
+  # Builder otherwise expands x64 as x86_64 for AppImage and amd64 for DEB.
+  # Linux currently supports x64 only; keep one stable release naming contract.
+  artifactName: Reelferry-${version}-linux-x64.${ext}
+  executableName: reelferry
+  category: AudioVideo
+  icon: build/icon.png
+  target:
+    - target: AppImage
+      arch: [x64]
+    - target: deb
+      arch: [x64]
+  maintainer: BatuCani <180430944+BatuCani@users.noreply.github.com>
+
+deb:
+  depends:
+    - libgtk-3-0
+    - libnss3
+    - libasound2
+    - libxss1
+    - libxtst6
+    - xdg-utils
+    - libatspi2.0-0
+    - libuuid1
+    - libsecret-1-0
+
+# Auto-updates come from GitHub Releases: electron-updater reads
+# latest-mac.yml / latest.yml / latest-linux.yml from the published release.
+# They stay off until official signed releases exist (OFFICIAL_RELEASES in
+# src/main/update-provider.ts).
+publish:
+  provider: github
+  owner: BatuCani
+  repo: reelferry
